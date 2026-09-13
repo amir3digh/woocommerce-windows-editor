@@ -8,7 +8,7 @@ namespace WooCommerceProductManager.Configuration;
 public static class AppPaths
 {
     public static string RootDirectory =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WooCommerceProductManager");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "NarvanYadak");
 
     public static string LogsDirectory => Path.Combine(RootDirectory, "logs");
 

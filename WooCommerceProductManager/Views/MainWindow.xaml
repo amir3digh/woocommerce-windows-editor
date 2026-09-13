@@ -12,6 +12,7 @@
         FlowDirection="RightToLeft"
         FontFamily="{StaticResource UiFont}"
         Title="{x:Static helpers:UiStrings.AppTitle}"
+        Icon="pack://application:,,,/Assets/narvan-logo.png"
         Height="760"
         Width="1180"
         MinHeight="560"
@@ -20,15 +21,23 @@
         Background="{StaticResource BackgroundBrush}">
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="{StaticResource HeaderBrush}" Padding="20,16">
-            <StackPanel>
-                <TextBlock Text="{x:Static helpers:UiStrings.AppTitle}"
-                           FontSize="22"
-                           FontWeight="SemiBold"
-                           Foreground="White" />
-                <TextBlock Text="{x:Static helpers:UiStrings.AppSubtitle}"
-                           Margin="0,4,0,0"
-                           Foreground="#D6E4F0"
-                           FontSize="13" />
+            <StackPanel Orientation="Horizontal">
+                <Image Source="pack://application:,,,/Assets/narvan-logo.png"
+                       Width="56"
+                       Height="56"
+                       Stretch="Uniform"
+                       Margin="14,0,0,0"
+                       RenderOptions.BitmapScalingMode="HighQuality" />
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{x:Static helpers:UiStrings.AppTitle}"
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+                    <TextBlock Text="{x:Static helpers:UiStrings.AppSubtitle}"
+                               Margin="0,4,0,0"
+                               Foreground="#D6E4F0"
+                               FontSize="13" />
+                </StackPanel>
             </StackPanel>
         </Border>
 

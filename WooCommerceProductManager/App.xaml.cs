@@ -67,7 +67,7 @@ public partial class App : Application
         _services = services.BuildServiceProvider();
 
         var logger = _services.GetRequiredService<ILogger<App>>();
-        logger.LogInformation("WooCommerce Product Manager starting.");
+        logger.LogInformation("Narvan Yadak starting.");
 
         try
         {

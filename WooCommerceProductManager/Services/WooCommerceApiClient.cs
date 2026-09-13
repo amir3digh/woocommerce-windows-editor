@@ -50,7 +50,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
             Timeout = RequestTimeout
         };
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("WooCommerceProductManager/1.0");
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("NarvanYadak/1.0");
     }
 
     public async Task TestConnectionAsync(WooCommerceSettings settings, CancellationToken cancellationToken = default)

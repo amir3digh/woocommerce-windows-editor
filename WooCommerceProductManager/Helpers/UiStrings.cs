@@ -2,8 +2,8 @@ namespace WooCommerceProductManager.Helpers;
 
 public static class UiStrings
 {
-    public const string AppTitle = "مدیریت محصولات ووکامرس";
-    public const string AppSubtitle = "مدیریت محصولات فروشگاه در ویندوز";
+    public const string AppTitle = "نارون یدک";
+    public const string AppSubtitle = "مدیریت محصولات فروشگاه";
     public const string SyncFromWebsite = "همگام‌سازی از وب‌سایت";
     public const string SyncToWebsite = "همگام‌سازی به وب‌سایت";
     public const string ComingNext = "به‌زودی";

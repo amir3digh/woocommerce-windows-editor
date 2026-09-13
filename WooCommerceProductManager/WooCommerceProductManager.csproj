@@ -7,11 +7,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <RootNamespace>WooCommerceProductManager</RootNamespace>
-    <AssemblyName>WooCommerceProductManager</AssemblyName>
-    <ApplicationTitle>WooCommerce Product Manager</ApplicationTitle>
-    <Product>WooCommerce Product Manager</Product>
-    <Authors>WooCommerce Product Manager</Authors>
-    <Description>Windows desktop application for managing WooCommerce products.</Description>
+    <AssemblyName>NarvanYadak</AssemblyName>
+    <ApplicationTitle>نارون یدک</ApplicationTitle>
+    <Product>نارون یدک</Product>
+    <AssemblyTitle>نارون یدک</AssemblyTitle>
+    <Company>نارون یدک</Company>
+    <Authors>نارون یدک</Authors>
+    <Description>مدیریت محصولات فروشگاه نارون یدک</Description>
+    <Version>1.0.0</Version>
+    <ApplicationIcon>Assets\narvan.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,7 +42,9 @@
     </None>
     <None Update="appsettings.Development.json" Condition="Exists('appsettings.Development.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
+    <Resource Include="Assets\narvan-logo.png" />
   </ItemGroup>
 
 </Project>

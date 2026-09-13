@@ -31,7 +31,7 @@ public sealed class ProductImageCache : IProductImageCache, IDisposable
         {
             Timeout = TimeSpan.FromSeconds(45)
         };
-        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("WooCommerceProductManager/1.0");
+        _httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("NarvanYadak/1.0");
         _httpClient.DefaultRequestHeaders.Accept.ParseAdd("image/avif,image/webp,image/apng,image/*,*/*;q=0.8");
     }
 
