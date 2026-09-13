@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using WooCommerceProductManager.Helpers;
 
 namespace WooCommerceProductManager.Models;
 
@@ -59,18 +60,9 @@ public sealed class Product
     public string DisplaySku => string.IsNullOrWhiteSpace(Sku) ? "—" : Sku;
 
     [JsonIgnore]
-    public string DisplayPrice
-    {
-        get
-        {
-            if (!string.IsNullOrWhiteSpace(Price))
-            {
-                return Price;
-            }
-
-            return string.IsNullOrWhiteSpace(RegularPrice) ? "—" : RegularPrice;
-        }
-    }
+    public string DisplayPrice =>
+        PersianPriceFormatter.FormatForDisplay(
+            !string.IsNullOrWhiteSpace(Price) ? Price : RegularPrice);
 
     [JsonIgnore]
     public string DisplayStockQuantity
@@ -79,7 +71,7 @@ public sealed class Product
         {
             if (!ManageStock)
             {
-                return "Not managed";
+                return UiStrings.NotManaged;
             }
 
             return StockQuantity is null ? "—" : StockQuantity.Value.ToString();
@@ -89,9 +81,9 @@ public sealed class Product
     [JsonIgnore]
     public string DisplayStockStatus => StockStatus switch
     {
-        "instock" => "In stock",
-        "outofstock" => "Out of stock",
-        "onbackorder" => "On backorder",
+        "instock" => UiStrings.InStock,
+        "outofstock" => UiStrings.OutOfStock,
+        "onbackorder" => UiStrings.OnBackorder,
         _ => string.IsNullOrWhiteSpace(StockStatus) ? "—" : StockStatus
     };
 }

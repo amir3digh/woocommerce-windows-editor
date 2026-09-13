@@ -8,7 +8,10 @@
         xmlns:vm="clr-namespace:WooCommerceProductManager.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
-        Title="WooCommerce Product Manager"
+        xml:lang="fa-IR"
+        FlowDirection="RightToLeft"
+        FontFamily="{StaticResource UiFont}"
+        Title="{x:Static helpers:UiStrings.AppTitle}"
         Height="760"
         Width="1180"
         MinHeight="560"
@@ -18,11 +21,11 @@
     <DockPanel>
         <Border DockPanel.Dock="Top" Background="{StaticResource HeaderBrush}" Padding="20,16">
             <StackPanel>
-                <TextBlock Text="WooCommerce Product Manager"
+                <TextBlock Text="{x:Static helpers:UiStrings.AppTitle}"
                            FontSize="22"
                            FontWeight="SemiBold"
                            Foreground="White" />
-                <TextBlock Text="Manage store products from Windows"
+                <TextBlock Text="{x:Static helpers:UiStrings.AppSubtitle}"
                            Margin="0,4,0,0"
                            Foreground="#D6E4F0"
                            FontSize="13" />
@@ -36,27 +39,31 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="Sync from Website"
+                    <Button Content="{x:Static helpers:UiStrings.SyncFromWebsite}"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding SyncFromWebsiteCommand}"
                             IsEnabled="{Binding IsIdle}" />
-                    <Button Content="Sync to Website"
+                    <Button Content="{x:Static helpers:UiStrings.SyncToWebsite}"
                             IsEnabled="False"
-                            ToolTip="Coming next" />
+                            ToolTip="{x:Static helpers:UiStrings.ComingNext}" />
                 </StackPanel>
-                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
                     <TextBlock Text="{Binding SyncStatusText}" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
                     <TextBlock Margin="0,4,0,0" Foreground="{StaticResource MutedTextBrush}">
-                        <Run Text="Downloaded:" />
-                        <Run Text="{Binding SyncDownloaded, Mode=OneWay}" />
-                        <Run Text="  Updated:" />
-                        <Run Text="{Binding SyncUpdated, Mode=OneWay}" />
-                        <Run Text="  Added:" />
-                        <Run Text="{Binding SyncAdded, Mode=OneWay}" />
-                        <Run Text="  Conflicts:" />
-                        <Run Text="{Binding SyncConflicts, Mode=OneWay}" />
-                        <Run Text="  Errors:" />
-                        <Run Text="{Binding SyncErrors, Mode=OneWay}" />
+                        <Run Text="{x:Static helpers:UiStrings.DownloadedLabel}" />
+                        <Run Text="{Binding SyncDownloaded, Mode=OneWay}" FlowDirection="LeftToRight" xml:lang="en" />
+                        <Run Text="  " />
+                        <Run Text="{x:Static helpers:UiStrings.UpdatedLabel}" />
+                        <Run Text="{Binding SyncUpdated, Mode=OneWay}" FlowDirection="LeftToRight" xml:lang="en" />
+                        <Run Text="  " />
+                        <Run Text="{x:Static helpers:UiStrings.AddedLabel}" />
+                        <Run Text="{Binding SyncAdded, Mode=OneWay}" FlowDirection="LeftToRight" xml:lang="en" />
+                        <Run Text="  " />
+                        <Run Text="{x:Static helpers:UiStrings.ConflictsLabel}" />
+                        <Run Text="{Binding SyncConflicts, Mode=OneWay}" FlowDirection="LeftToRight" xml:lang="en" />
+                        <Run Text="  " />
+                        <Run Text="{x:Static helpers:UiStrings.ErrorsLabel}" />
+                        <Run Text="{Binding SyncErrors, Mode=OneWay}" FlowDirection="LeftToRight" xml:lang="en" />
                     </TextBlock>
                 </StackPanel>
             </Grid>
@@ -68,7 +75,7 @@
                            VerticalAlignment="Center"
                            Foreground="{StaticResource MutedTextBrush}" />
                 <TextBlock Text="{Binding ErrorMessage}"
-                           HorizontalAlignment="Right"
+                           HorizontalAlignment="Left"
                            Foreground="{StaticResource ErrorBrush}"
                            Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhenHasTextConverter}}" />
             </Grid>
@@ -82,7 +89,7 @@
             </Grid.RowDefinitions>
 
             <Expander Grid.Row="0"
-                      Header="Store connection"
+                      Header="{x:Static helpers:UiStrings.StoreConnection}"
                       IsExpanded="{Binding IsSettingsExpanded}"
                       Margin="0,0,0,12"
                       Background="White"
@@ -101,32 +108,44 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Store URL" VerticalAlignment="Center" />
-                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding StoreUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{x:Static helpers:UiStrings.StoreUrl}" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="0"
+                             Grid.Column="1"
+                             Text="{Binding StoreUrl, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,8"
+                             xml:lang="en"
+                             Style="{StaticResource LtrTextBox}" />
 
-                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Consumer Key" VerticalAlignment="Center" />
-                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ConsumerKey, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="{x:Static helpers:UiStrings.ConsumerKey}" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="1"
+                             Grid.Column="1"
+                             Text="{Binding ConsumerKey, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,8"
+                             xml:lang="en"
+                             Style="{StaticResource LtrTextBox}" />
 
-                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Consumer Secret" VerticalAlignment="Center" />
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="{x:Static helpers:UiStrings.ConsumerSecret}" VerticalAlignment="Center" />
                     <PasswordBox Grid.Row="2"
                                  Grid.Column="1"
                                  Margin="0,0,0,8"
+                                 xml:lang="en"
+                                 Style="{StaticResource LtrPasswordBox}"
                                  helpers:PasswordBoxAssistant.BindPassword="True"
                                  helpers:PasswordBoxAssistant.BoundPassword="{Binding ConsumerSecret, UpdateSourceTrigger=PropertyChanged}" />
 
                     <TextBlock Grid.Row="3"
                                Grid.Column="1"
-                               Text="Credentials are stored only on this computer and are never written to Git."
+                               Text="{x:Static helpers:UiStrings.CredentialsHint}"
                                Foreground="{StaticResource MutedTextBrush}"
                                Margin="0,0,0,8"
                                TextWrapping="Wrap" />
 
                     <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="Save settings"
+                        <Button Content="{x:Static helpers:UiStrings.SaveSettings}"
                                 HorizontalAlignment="Left"
                                 Command="{Binding SaveSettingsCommand}"
                                 IsEnabled="{Binding IsIdle}" />
-                        <Button Content="Test Connection"
+                        <Button Content="{x:Static helpers:UiStrings.TestConnection}"
                                 Style="{StaticResource PrimaryButton}"
                                 Command="{Binding TestConnectionCommand}"
                                 IsEnabled="{Binding IsIdle}" />
@@ -160,14 +179,14 @@
                 <Grid Grid.Column="0">
                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                              IsEnabled="{Binding IsIdle}" />
-                    <TextBlock Text="Search products..."
+                    <TextBlock Text="{x:Static helpers:UiStrings.SearchPlaceholder}"
                                IsHitTestVisible="False"
                                Foreground="#8B949E"
-                               Margin="10,7,0,0"
+                               Margin="10,7"
                                Visibility="{Binding SearchText, Converter={StaticResource VisibleWhenHasTextConverter}, ConverterParameter=Invert}" />
                 </Grid>
                 <Button Grid.Column="1"
-                        Content="Search"
+                        Content="{x:Static helpers:UiStrings.Search}"
                         Command="{Binding SearchCommand}"
                         IsEnabled="{Binding IsIdle}" />
             </Grid>

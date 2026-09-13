@@ -19,7 +19,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0"
-                        Content="Previous"
+                        Content="{x:Static helpers:UiStrings.Previous}"
                         Command="{Binding DataContext.PreviousPageCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                 <TextBlock Grid.Column="1"
                            Text="{Binding PageSummary}"
@@ -27,10 +27,10 @@
                            VerticalAlignment="Center"
                            Foreground="{StaticResource MutedTextBrush}" />
                 <Button Grid.Column="2"
-                        Content="Refresh"
+                        Content="{x:Static helpers:UiStrings.Refresh}"
                         Command="{Binding DataContext.LoadProductsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
                 <Button Grid.Column="3"
-                        Content="Next"
+                        Content="{x:Static helpers:UiStrings.Next}"
                         Command="{Binding DataContext.NextPageCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
             </Grid>
 
@@ -49,12 +49,12 @@
                           SelectionUnit="FullRow"
                           EnableRowVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="Image" Width="80">
+                        <DataGridTemplateColumn Header="{x:Static helpers:UiStrings.Image}" Width="80">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid Width="48" Height="48">
                                         <Border Background="#EEF2F6" CornerRadius="4">
-                                            <TextBlock Text="No image"
+                                            <TextBlock Text="{x:Static helpers:UiStrings.NoImage}"
                                                        FontSize="10"
                                                        Foreground="{StaticResource MutedTextBrush}"
                                                        HorizontalAlignment="Center"
@@ -70,17 +70,18 @@
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
-                        <DataGridTextColumn Header="Product" Binding="{Binding Name}" Width="*" />
-                        <DataGridTextColumn Header="SKU" Binding="{Binding DisplaySku}" Width="120" />
-                        <DataGridTextColumn Header="Price" Binding="{Binding DisplayPrice}" Width="90" />
-                        <DataGridTextColumn Header="Stock" Binding="{Binding DisplayStockQuantity}" Width="110" />
-                        <DataGridTextColumn Header="Status" Binding="{Binding DisplayStockStatus}" Width="120" />
-                        <DataGridTemplateColumn Header="" Width="100">
+                        <DataGridTextColumn Header="{x:Static helpers:UiStrings.Product}" Binding="{Binding Name}" Width="*" />
+                        <DataGridTextColumn Header="{x:Static helpers:UiStrings.Price}"
+                                            Binding="{Binding DisplayPrice}"
+                                            Width="150" />
+                        <DataGridTextColumn Header="{x:Static helpers:UiStrings.Stock}" Binding="{Binding DisplayStockQuantity}" Width="110" />
+                        <DataGridTextColumn Header="{x:Static helpers:UiStrings.Status}" Binding="{Binding DisplayStockStatus}" Width="120" />
+                        <DataGridTemplateColumn Header="" Width="110">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Unsynced"
+                                    <Button Content="{x:Static helpers:UiStrings.Unsynced}"
                                             Style="{StaticResource UnsyncedButton}"
-                                            ToolTip="Saved on this computer but not on the website. Click to retry."
+                                            ToolTip="{x:Static helpers:UiStrings.UnsyncedTooltip}"
                                             Command="{Binding DataContext.RetrySyncCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
                                             Visibility="{Binding IsDirty, Converter={StaticResource VisibleWhenTrueConverter}}" />
@@ -90,7 +91,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
 
-                <TextBlock Text="No local products yet. Use Sync from Website to download your catalog."
+                <TextBlock Text="{x:Static helpers:UiStrings.NoLocalProducts}"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
                            Foreground="{StaticResource MutedTextBrush}"
@@ -101,7 +102,7 @@
 
                 <Border Background="#CCFFFFFF"
                         Visibility="{Binding IsLoading, Converter={StaticResource VisibleWhenTrueConverter}}">
-                    <TextBlock Text="Loading products..."
+                    <TextBlock Text="{x:Static helpers:UiStrings.LoadingProducts}"
                                FontSize="16"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"

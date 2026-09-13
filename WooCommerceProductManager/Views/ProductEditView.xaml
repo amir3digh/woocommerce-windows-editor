@@ -12,9 +12,9 @@
     <Border Background="White" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="16">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="Product" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                <TextBlock Text="{x:Static helpers:UiStrings.Product}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-                <Grid Width="160" Height="160" HorizontalAlignment="Left" Margin="0,0,0,16">
+                <Grid Width="160" Height="160" HorizontalAlignment="Right" Margin="0,0,0,16">
                     <Border Background="#EEF2F6" CornerRadius="6">
                         <TextBlock Text="{Binding PlaceholderText}"
                                    HorizontalAlignment="Center"
@@ -30,32 +30,56 @@
                            Source="{Binding ImageUrl, Converter={StaticResource UrlToImageSourceConverter}}" />
                 </Grid>
 
-                <TextBlock Text="Title" Margin="0,0,0,4" />
+                <TextBlock Text="{x:Static helpers:UiStrings.Title}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,10"
                          IsEnabled="{Binding CanEdit}" />
 
-                <TextBlock Text="SKU" Margin="0,0,0,4" />
+                <TextBlock Text="{x:Static helpers:UiStrings.Sku}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,10"
+                         xml:lang="en"
+                         Style="{StaticResource LtrTextBox}"
                          IsEnabled="{Binding CanEdit}" />
 
-                <TextBlock Text="Regular Price" Margin="0,0,0,4" />
-                <TextBox Text="{Binding RegularPrice, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,0,0,10"
-                         IsEnabled="{Binding CanEdit}" />
+                <TextBlock Text="{x:Static helpers:UiStrings.RegularPrice}" Margin="0,0,0,4" />
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding RegularPrice, Converter={StaticResource PersianPriceInputConverter}, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding CanEdit}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static helpers:UiStrings.Currency}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </Grid>
 
-                <TextBlock Text="Sale Price" Margin="0,0,0,4" />
-                <TextBox Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,0,0,10"
-                         IsEnabled="{Binding CanEdit}" />
+                <TextBlock Text="{x:Static helpers:UiStrings.SalePrice}" Margin="0,0,0,4" />
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding SalePrice, Converter={StaticResource PersianPriceInputConverter}, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding CanEdit}" />
+                    <TextBlock Grid.Column="1"
+                               Text="{x:Static helpers:UiStrings.Currency}"
+                               VerticalAlignment="Center"
+                               Margin="8,0,0,0"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </Grid>
 
-                <TextBlock Text="Stock Quantity" Margin="0,0,0,4" />
+                <TextBlock Text="{x:Static helpers:UiStrings.StockQuantity}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding StockQuantity, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,10"
+                         xml:lang="en"
+                         Style="{StaticResource LtrTextBox}"
                          IsEnabled="{Binding IsStockQuantityEnabled}" />
 
-                <TextBlock Text="Stock Status" Margin="0,0,0,4" />
+                <TextBlock Text="{x:Static helpers:UiStrings.StockStatus}" Margin="0,0,0,4" />
                 <ComboBox ItemsSource="{Binding StockStatusChoices}"
                           DisplayMemberPath="Display"
                           SelectedValuePath="Value"
@@ -85,9 +109,9 @@
                     </TextBlock.Style>
                 </TextBlock>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Command="{Binding CancelCommand}" />
-                    <Button Content="Save"
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Content="{x:Static helpers:UiStrings.Cancel}" Command="{Binding CancelCommand}" />
+                    <Button Content="{x:Static helpers:UiStrings.Save}"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding SaveCommand}" />
                 </StackPanel>

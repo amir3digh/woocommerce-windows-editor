@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using WooCommerceProductManager.Configuration;
+using WooCommerceProductManager.Helpers;
 using WooCommerceProductManager.Models;
 using WooCommerceProductManager.Repositories;
 
@@ -92,7 +93,7 @@ public sealed class ProductService : IProductService
         {
             _logger.LogError(ex, "Failed to deserialize WooCommerce products JSON.");
             throw new WooCommerceApiException(
-                "WooCommerce returned product data that could not be read.",
+                UiStrings.InvalidProductsJson,
                 diagnosticMessage: "Invalid products JSON.",
                 innerException: ex);
         }
@@ -174,14 +175,14 @@ public sealed class ProductService : IProductService
             {
                 _logger.LogError(ex, "WooCommerce returned invalid product JSON after PUT /products/{Id}.", local.Id);
                 throw new WooCommerceApiException(
-                    "WooCommerce saved the product but returned data that could not be read.",
+                    UiStrings.SavedButUnreadableResponse,
                     diagnosticMessage: "Invalid product JSON after update.",
                     innerException: ex);
             }
 
             if (remote is null)
             {
-                throw new WooCommerceApiException("WooCommerce did not return the updated product.");
+                throw new WooCommerceApiException(UiStrings.DidNotReturnUpdatedProduct);
             }
 
             remote.LocalId = local.LocalId;
@@ -217,7 +218,7 @@ public sealed class ProductService : IProductService
             {
                 Product = local,
                 RemoteSaved = false,
-                RemoteError = "Unable to update WooCommerce. Local changes were kept."
+                RemoteError = UiStrings.UnableToUpdateKeptLocal
             };
         }
     }

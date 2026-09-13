@@ -9,20 +9,20 @@ public static class WooCommerceUrlValidator
 
         if (string.IsNullOrWhiteSpace(storeUrl))
         {
-            error = "Store URL is required.";
+            error = UiStrings.StoreUrlRequired;
             return false;
         }
 
         var trimmed = storeUrl.Trim();
         if (!Uri.TryCreate(trimmed, UriKind.Absolute, out var uri))
         {
-            error = "Store URL is not a valid absolute URL.";
+            error = UiStrings.StoreUrlInvalid;
             return false;
         }
 
         if (!string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            error = "Store URL must use HTTPS.";
+            error = UiStrings.StoreUrlMustBeHttps;
             return false;
         }
 

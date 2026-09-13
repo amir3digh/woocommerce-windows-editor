@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WooCommerceProductManager.Helpers;
 using WooCommerceProductManager.Models;
 using WooCommerceProductManager.Services;
 
@@ -44,10 +45,10 @@ public partial class ProductListViewModel : ObservableObject
         {
             if (TotalPages is > 0)
             {
-                return $"Page {CurrentPage} of {TotalPages}";
+                return UiStrings.PageOf(CurrentPage, TotalPages.Value);
             }
 
-            return $"Page {CurrentPage}";
+            return UiStrings.PageOnly(CurrentPage);
         }
     }
 

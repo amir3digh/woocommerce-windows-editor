@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using System.Windows;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,10 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        var persian = CultureInfo.GetCultureInfo("fa-IR");
+        CultureInfo.DefaultThreadCurrentCulture = persian;
+        CultureInfo.DefaultThreadCurrentUICulture = persian;
 
         Directory.CreateDirectory(AppPaths.RootDirectory);
         Directory.CreateDirectory(AppPaths.LogsDirectory);
@@ -69,20 +74,24 @@ public partial class App : Application
         {
             logger.LogError(ex, "Failed to initialize the local SQLite database.");
             MessageBox.Show(
-                "The local product database could not be initialized. You can still open the application, but product data may be unavailable.",
-                "WooCommerce Product Manager",
+                UiStrings.DatabaseInitFailed,
+                UiStrings.AppTitle,
                 MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                MessageBoxImage.Warning,
+                MessageBoxResult.OK,
+                MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign);
         }
 
         DispatcherUnhandledException += (_, args) =>
         {
             logger.LogError(args.Exception, "Unhandled UI exception.");
             MessageBox.Show(
-                "An unexpected error occurred. Details were written to the application log.",
-                "WooCommerce Product Manager",
+                UiStrings.UnexpectedError,
+                UiStrings.AppTitle,
                 MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                MessageBoxImage.Error,
+                MessageBoxResult.OK,
+                MessageBoxOptions.RtlReading | MessageBoxOptions.RightAlign);
             args.Handled = true;
         };
 

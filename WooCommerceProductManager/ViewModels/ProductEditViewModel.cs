@@ -58,9 +58,9 @@ public partial class ProductEditViewModel : ObservableObject
 
     public IReadOnlyList<StockStatusChoice> StockStatusChoices { get; } =
     [
-        new("instock", "In stock"),
-        new("outofstock", "Out of stock"),
-        new("onbackorder", "On backorder")
+        new("instock", UiStrings.InStock),
+        new("outofstock", UiStrings.OutOfStock),
+        new("onbackorder", UiStrings.OnBackorder)
     ];
 
     public bool HasProduct => Product is not null;
@@ -69,7 +69,7 @@ public partial class ProductEditViewModel : ObservableObject
 
     public bool IsStockQuantityEnabled => CanEdit && ManageStock;
 
-    public string PlaceholderText => HasProduct ? "No image" : "No product selected";
+    public string PlaceholderText => HasProduct ? UiStrings.NoImage : UiStrings.NoProductSelected;
 
     public Func<Task>? SaveAction { get; set; }
 
@@ -141,13 +141,13 @@ public partial class ProductEditViewModel : ObservableObject
 
         if (Product is null)
         {
-            ValidationMessage = "Select a product to edit.";
+            ValidationMessage = UiStrings.SelectProductToEdit;
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            ValidationMessage = "Product name cannot be empty.";
+            ValidationMessage = UiStrings.ProductNameRequired;
             return false;
         }
 
@@ -168,13 +168,13 @@ public partial class ProductEditViewModel : ObservableObject
         {
             if (string.IsNullOrWhiteSpace(StockQuantity))
             {
-                ValidationMessage = "Stock quantity is required when stock management is enabled.";
+                ValidationMessage = UiStrings.StockQuantityRequired;
                 return false;
             }
 
             if (!int.TryParse(StockQuantity.Trim(), out var parsedQuantity) || parsedQuantity < 0)
             {
-                ValidationMessage = "Stock quantity must be a valid non-negative integer.";
+                ValidationMessage = UiStrings.StockQuantityInvalid;
                 return false;
             }
 
@@ -184,7 +184,7 @@ public partial class ProductEditViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(StockStatus)
             || StockStatusChoices.All(choice => choice.Value != StockStatus))
         {
-            ValidationMessage = "Select a valid stock status.";
+            ValidationMessage = UiStrings.SelectValidStockStatus;
             return false;
         }
 

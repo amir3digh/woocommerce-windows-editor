@@ -20,21 +20,21 @@ public static class WooCommercePriceParser
                 return true;
             }
 
-            error = "Regular price is required.";
+            error = UiStrings.RegularPriceRequired;
             return false;
         }
 
-        var trimmed = text.Trim();
+        var trimmed = PersianPriceFormatter.NormalizeForParse(text);
         if (!decimal.TryParse(trimmed, NumberStyles.Number, CultureInfo.CurrentCulture, out var amount)
             && !decimal.TryParse(trimmed, NumberStyles.Number, CultureInfo.InvariantCulture, out amount))
         {
-            error = "Enter a valid non-negative price.";
+            error = UiStrings.InvalidPrice;
             return false;
         }
 
         if (amount < 0)
         {
-            error = "Price cannot be negative.";
+            error = UiStrings.PriceCannotBeNegative;
             return false;
         }
 

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using WooCommerceProductManager.Configuration;
+using WooCommerceProductManager.Helpers;
 using WooCommerceProductManager.Repositories;
 
 namespace WooCommerceProductManager.Services;
@@ -52,7 +53,7 @@ public sealed class SyncService : ISyncService
                     Errors = errors,
                     CurrentPage = page,
                     TotalPages = totalPages,
-                    StatusMessage = $"Syncing page {page}..."
+                    StatusMessage = UiStrings.SyncingPage(page)
                 });
 
                 var remotePage = await _productService
@@ -104,7 +105,7 @@ public sealed class SyncService : ISyncService
                     Errors = errors,
                     CurrentPage = page,
                     TotalPages = totalPages,
-                    StatusMessage = $"Finished page {page}."
+                    StatusMessage = UiStrings.FinishedPage(page)
                 });
 
                 var isLastPage = totalPages is int known && known > 0
@@ -147,7 +148,7 @@ public sealed class SyncService : ISyncService
                 Errors = errors,
                 TotalPages = totalPages,
                 IsComplete = true,
-                StatusMessage = "Sync complete."
+                StatusMessage = UiStrings.SyncComplete
             });
 
             return result;
@@ -183,7 +184,7 @@ public sealed class SyncService : ISyncService
                 Conflicts = conflicts,
                 Errors = errors + 1,
                 Succeeded = false,
-                ErrorMessage = "Synchronization failed. Local products were not deleted.",
+                ErrorMessage = UiStrings.SyncFailedLocalNotDeleted,
                 ConflictSummaries = conflictSummaries
             };
         }

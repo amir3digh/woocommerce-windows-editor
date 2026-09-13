@@ -7,6 +7,9 @@
         <helpers:BooleanToVisibilityConverter x:Key="VisibleWhenFalseConverter" Invert="True" />
         <helpers:NullOrEmptyToVisibilityConverter x:Key="VisibleWhenHasTextConverter" />
         <helpers:UrlToImageSourceConverter x:Key="UrlToImageSourceConverter" />
+        <helpers:PersianPriceInputConverter x:Key="PersianPriceInputConverter" />
+
+        <FontFamily x:Key="UiFont">Tahoma, Segoe UI, Microsoft Sans Serif</FontFamily>
 
         <SolidColorBrush x:Key="HeaderBrush" Color="#1F4E79" />
         <SolidColorBrush x:Key="AccentBrush" Color="#2E75B6" />
@@ -16,28 +19,61 @@
         <SolidColorBrush x:Key="ErrorBrush" Color="#B42318" />
         <SolidColorBrush x:Key="SuccessBrush" Color="#1B7F3A" />
 
+        <Style TargetType="Window">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FlowDirection" Value="RightToLeft" />
+            <Setter Property="Language" Value="fa-IR" />
+        </Style>
+
+        <Style TargetType="Control">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        </Style>
+
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="#1F2328" />
             <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style TargetType="TextBox">
             <Setter Property="Padding" Value="8,6" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="BorderBrush" Value="#D0D7DE" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style TargetType="PasswordBox">
             <Setter Property="Padding" Value="8,6" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="BorderBrush" Value="#D0D7DE" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+
+        <Style TargetType="ToolTip">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+            <Setter Property="FlowDirection" Value="RightToLeft" />
+        </Style>
+
+        <Style TargetType="Expander">
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style TargetType="Button">
             <Setter Property="Padding" Value="14,6" />
-            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="Margin" Value="8,0,0,0" />
             <Setter Property="FontSize" Value="13" />
             <Setter Property="MinWidth" Value="88" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
         <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -46,12 +82,25 @@
             <Setter Property="BorderThickness" Value="0" />
         </Style>
 
+        <Style x:Key="LtrTextBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="FlowDirection" Value="LeftToRight" />
+        </Style>
+
+        <Style x:Key="LtrPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource {x:Type PasswordBox}}">
+            <Setter Property="FlowDirection" Value="LeftToRight" />
+        </Style>
+
+        <Style x:Key="LtrCellText" TargetType="TextBlock">
+            <Setter Property="FlowDirection" Value="LeftToRight" />
+            <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        </Style>
+
         <Style x:Key="UnsyncedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#B45309" />
             <Setter Property="Foreground" Value="White" />
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="Padding" Value="8,4" />
-            <Setter Property="MinWidth" Value="72" />
+            <Setter Property="MinWidth" Value="96" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Margin" Value="0" />
         </Style>

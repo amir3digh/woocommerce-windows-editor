@@ -92,18 +92,18 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
     {
         if (!WooCommerceUrlValidator.TryValidateHttpsStoreUrl(settings.StoreUrl, out var normalizedUrl, out var error))
         {
-            throw new WooCommerceApiException(error ?? "Store URL must use HTTPS.");
+            throw new WooCommerceApiException(error ?? UiStrings.StoreUrlMustBeHttps);
         }
 
         if (string.IsNullOrWhiteSpace(settings.ConsumerKey) || string.IsNullOrWhiteSpace(settings.ConsumerSecret))
         {
-            throw new WooCommerceApiException("Consumer Key and Consumer Secret are required.");
+            throw new WooCommerceApiException(UiStrings.CredentialsRequired);
         }
 
         var baseAddress = new Uri(normalizedUrl, UriKind.Absolute);
         if (!string.Equals(baseAddress.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            throw new WooCommerceApiException("Store URL must use HTTPS.");
+            throw new WooCommerceApiException(UiStrings.StoreUrlMustBeHttps);
         }
 
         lock (_configurationSync)
@@ -140,7 +140,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         {
             _logger.LogWarning(ex, "HTTP {Method} {Path} timed out.", request.Method.Method, requestPath);
             throw new WooCommerceApiException(
-                "The request to WooCommerce timed out. Please try again.",
+                UiStrings.RequestTimedOut,
                 diagnosticMessage: "Request timed out.",
                 innerException: ex);
         }
@@ -148,7 +148,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         {
             _logger.LogWarning(ex, "HTTP {Method} {Path} failed with a network error.", request.Method.Method, requestPath);
             throw new WooCommerceApiException(
-                "Unable to connect to WooCommerce. Please check the store URL and API credentials.",
+                UiStrings.UnableToConnect,
                 diagnosticMessage: "Network failure while calling WooCommerce.",
                 innerException: ex);
         }
@@ -165,7 +165,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
             if ((int)response.StatusCode is >= 300 and < 400)
             {
                 throw new WooCommerceApiException(
-                    "The store URL redirected to another location. Confirm the HTTPS WooCommerce REST API URL.",
+                    UiStrings.StoreUrlRedirected,
                     (int)response.StatusCode,
                     $"Unexpected redirect status {(int)response.StatusCode}.");
             }
@@ -178,7 +178,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
             if (!IsJsonContent(response))
             {
                 throw new WooCommerceApiException(
-                    "The store URL did not return a WooCommerce REST API response. Confirm it ends with /wp-json/wc/v3/",
+                    UiStrings.StoreUrlNotRestApi,
                     (int)response.StatusCode,
                     "Successful HTTP status but non-JSON content type.");
             }
@@ -196,7 +196,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
     {
         if (request.RequestUri is null)
         {
-            throw new WooCommerceApiException("A request was created without a destination URL.");
+            throw new WooCommerceApiException(UiStrings.RequestMissingUrl);
         }
 
         string consumerKey;
@@ -218,7 +218,7 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         {
             if (_baseAddress is null)
             {
-                throw new WooCommerceApiException("The WooCommerce client is not configured.");
+                throw new WooCommerceApiException(UiStrings.ClientNotConfigured);
             }
 
             baseAddress = _baseAddress;
@@ -226,25 +226,25 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
 
         if (!Uri.TryCreate(baseAddress, relativePath, out var requestUri))
         {
-            throw new WooCommerceApiException("The WooCommerce request path is invalid.");
+            throw new WooCommerceApiException(UiStrings.RequestPathInvalid);
         }
 
         if (!string.Equals(requestUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
         {
-            throw new WooCommerceApiException("Store URL must use HTTPS.");
+            throw new WooCommerceApiException(UiStrings.StoreUrlMustBeHttps);
         }
 
         if (!string.Equals(requestUri.Host, baseAddress.Host, StringComparison.OrdinalIgnoreCase)
             || requestUri.Port != baseAddress.Port)
         {
-            throw new WooCommerceApiException("Requests can only be sent to the configured WooCommerce store URL.");
+            throw new WooCommerceApiException(UiStrings.RequestsOnlyToConfiguredStore);
         }
 
         var configuredPath = baseAddress.AbsolutePath.TrimEnd('/');
         if (!string.IsNullOrEmpty(configuredPath)
             && !requestUri.AbsolutePath.StartsWith(configuredPath, StringComparison.OrdinalIgnoreCase))
         {
-            throw new WooCommerceApiException("Requests can only be sent to the configured WooCommerce store URL.");
+            throw new WooCommerceApiException(UiStrings.RequestsOnlyToConfiguredStore);
         }
 
         return requestUri;
@@ -265,17 +265,17 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         var userMessage = statusCode switch
         {
             HttpStatusCode.Unauthorized =>
-                "Unable to connect to WooCommerce. Please check the store URL and API credentials.",
+                UiStrings.UnableToConnect,
             HttpStatusCode.Forbidden =>
-                "WooCommerce denied this request. The API key may not have permission to access products.",
+                UiStrings.Forbidden,
             HttpStatusCode.NotFound =>
-                "The WooCommerce REST API was not found. Confirm the Store URL ends with /wp-json/wc/v3/",
+                UiStrings.RestApiNotFound,
             HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout =>
-                "The WooCommerce store is unavailable. Please try again later.",
+                UiStrings.StoreUnavailable,
             _ when status >= 500 =>
-                "The WooCommerce store is unavailable. Please try again later.",
+                UiStrings.StoreUnavailable,
             _ => string.IsNullOrWhiteSpace(apiError?.Message)
-                ? "WooCommerce returned an error. Please check the store URL and API credentials."
+                ? UiStrings.WooCommerceReturnedError
                 : apiError.Message
         };
 

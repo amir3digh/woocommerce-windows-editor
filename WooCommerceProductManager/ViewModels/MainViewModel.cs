@@ -35,7 +35,7 @@ public partial class MainViewModel : ObservableObject
     private string _searchText = string.Empty;
 
     [ObservableProperty]
-    private string _statusMessage = "Configure your WooCommerce store to get started.";
+    private string _statusMessage = UiStrings.GetStarted;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveSettingsCommand))]
@@ -76,7 +76,7 @@ public partial class MainViewModel : ObservableObject
     private int _syncErrors;
 
     [ObservableProperty]
-    private string _syncStatusText = "Not synced yet. Use Sync from Website to download products.";
+    private string _syncStatusText = UiStrings.NotSyncedYet;
 
     public MainViewModel()
     {
@@ -172,7 +172,7 @@ public partial class MainViewModel : ObservableObject
         if (!TryCreateSettings(out var settings, out var error))
         {
             ErrorMessage = error;
-            StatusMessage = error ?? "Invalid store settings.";
+            StatusMessage = error ?? UiStrings.InvalidStoreSettings;
             return;
         }
 
@@ -181,13 +181,13 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _settingsService.Save(settings);
-            StatusMessage = "Settings saved on this computer.";
+            StatusMessage = UiStrings.SettingsSaved;
             _logger.LogInformation("User saved WooCommerce connection settings.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save WooCommerce settings.");
-            ErrorMessage = "Unable to save settings. See the application log for details.";
+            ErrorMessage = UiStrings.UnableToSaveSettings;
             StatusMessage = ErrorMessage;
         }
     }
@@ -203,18 +203,18 @@ public partial class MainViewModel : ObservableObject
         {
             ErrorMessage = error;
             ConnectionResultMessage = error;
-            StatusMessage = error ?? "Invalid store settings.";
+            StatusMessage = error ?? UiStrings.InvalidStoreSettings;
             return;
         }
 
         StoreUrl = settings.StoreUrl;
         IsBusy = true;
-        StatusMessage = "Testing connection...";
+        StatusMessage = UiStrings.TestingConnection;
 
         try
         {
             await _apiClient.TestConnectionAsync(settings).ConfigureAwait(true);
-            const string success = "Connected successfully";
+            var success = UiStrings.ConnectedSuccessfully;
             IsLastConnectionSuccessful = true;
             ConnectionResultMessage = success;
             ErrorMessage = null;
@@ -232,7 +232,7 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "WooCommerce connection test failed with an unexpected error.");
-            const string message = "Unable to connect to WooCommerce. Please check the store URL and API credentials.";
+            var message = UiStrings.UnableToConnect;
             IsLastConnectionSuccessful = false;
             ConnectionResultMessage = message;
             ErrorMessage = message;
@@ -284,14 +284,14 @@ public partial class MainViewModel : ObservableObject
         if (!TryCreateSettings(out var settings, out var error))
         {
             ErrorMessage = error;
-            StatusMessage = error ?? "Configure the store connection before syncing.";
+            StatusMessage = error ?? UiStrings.ConfigureBeforeSync;
             return;
         }
 
         IsBusy = true;
         ErrorMessage = null;
-        StatusMessage = "Syncing...";
-        SyncStatusText = "Syncing...";
+        StatusMessage = UiStrings.Syncing;
+        SyncStatusText = UiStrings.Syncing;
         NotifyPagingCommands();
 
         var progress = new Progress<SyncProgress>(update =>
@@ -322,14 +322,14 @@ public partial class MainViewModel : ObservableObject
 
             if (!result.Succeeded)
             {
-                ErrorMessage = result.ErrorMessage ?? "Synchronization failed. Existing local products were kept.";
+                ErrorMessage = result.ErrorMessage ?? UiStrings.SyncFailedKeptLocal;
                 StatusMessage = ErrorMessage;
                 SyncStatusText = ErrorMessage;
             }
             else
             {
-                StatusMessage =
-                    $"Sync complete. Downloaded: {result.Downloaded}. Updated: {result.Updated}. Added: {result.Added}. Conflicts: {result.Conflicts}. Errors: {result.Errors}.";
+                StatusMessage = UiStrings.SyncCompleteSummary(
+                    result.Downloaded, result.Updated, result.Added, result.Conflicts, result.Errors);
                 SyncStatusText = StatusMessage;
             }
 
@@ -337,13 +337,13 @@ public partial class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            StatusMessage = "Synchronization was cancelled. Existing local products were kept.";
+            StatusMessage = UiStrings.SyncCancelledKeptLocal;
             SyncStatusText = StatusMessage;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Sync from website failed.");
-            ErrorMessage = "Synchronization failed. Existing local products were kept.";
+            ErrorMessage = UiStrings.SyncFailedKeptLocal;
             StatusMessage = ErrorMessage;
             SyncStatusText = ErrorMessage;
         }
@@ -377,7 +377,7 @@ public partial class MainViewModel : ObservableObject
         IsBusy = true;
         Products.IsLoading = true;
         ErrorMessage = null;
-        StatusMessage = "Loading products...";
+        StatusMessage = UiStrings.LoadingProducts;
         NotifyPagingCommands();
 
         try
@@ -393,7 +393,7 @@ public partial class MainViewModel : ObservableObject
 
             Products.ApplyPage(result, Products.SelectedProduct?.LocalId);
             StatusMessage = result.TotalItems is 0
-                ? "No local products yet. Use Sync from Website to download your catalog."
+                ? UiStrings.NoLocalProducts
                 : FormatLoadedMessage(result);
             _logger.LogInformation("Displayed {Count} local products on page {Page}.", result.Products.Count, result.Page);
         }
@@ -408,7 +408,7 @@ public partial class MainViewModel : ObservableObject
                 "Failed to load local products. ExceptionType: {ExceptionType}. Message: {ExceptionMessage}.",
                 ex.GetType().FullName,
                 SensitiveDataRedactor.Redact(ex.Message));
-            const string message = "Unable to load products from the local database.";
+            var message = UiStrings.UnableToLoadLocalProducts;
             ErrorMessage = message;
             StatusMessage = message;
         }
@@ -427,10 +427,10 @@ public partial class MainViewModel : ObservableObject
     {
         if (result.TotalItems is int total)
         {
-            return $"Loaded {result.Products.Count} local products (page {result.Page} of {result.TotalPages ?? result.Page}). {total} total.";
+            return UiStrings.LoadedProducts(result.Products.Count, result.Page, result.TotalPages, total);
         }
 
-        return $"Loaded {result.Products.Count} local products (page {result.Page}).";
+        return UiStrings.LoadedProducts(result.Products.Count, result.Page, null, null);
     }
 
     private void NotifyPagingCommands()
@@ -450,14 +450,14 @@ public partial class MainViewModel : ObservableObject
 
         if (!ProductEdit.TryGetValidatedValues(out var values) || values is null || ProductEdit.Product is null)
         {
-            StatusMessage = ProductEdit.ValidationMessage ?? "The product could not be saved.";
+            StatusMessage = ProductEdit.ValidationMessage ?? UiStrings.ProductCouldNotBeSaved;
             return;
         }
 
         var jsonBody = ProductUpdatePayload.TryBuildChangedJson(ProductEdit.Product, values);
         if (jsonBody is null)
         {
-            ProductEdit.SaveMessage = "No changes to save.";
+            ProductEdit.SaveMessage = UiStrings.NoChangesToSave;
             ProductEdit.IsSaveSuccessful = true;
             StatusMessage = ProductEdit.SaveMessage;
             return;
@@ -467,7 +467,7 @@ public partial class MainViewModel : ObservableObject
         {
             ErrorMessage = error;
             ProductEdit.ValidationMessage = error;
-            StatusMessage = error ?? "Configure the store connection before saving.";
+            StatusMessage = error ?? UiStrings.ConfigureBeforeSave;
             return;
         }
 
@@ -476,7 +476,7 @@ public partial class MainViewModel : ObservableObject
 
         ProductEdit.IsSaving = true;
         IsBusy = true;
-        StatusMessage = "Saving...";
+        StatusMessage = UiStrings.Saving;
         NotifyPagingCommands();
 
         try
@@ -491,7 +491,7 @@ public partial class MainViewModel : ObservableObject
             if (result.RemoteSaved)
             {
                 ProductEdit.IsSaveSuccessful = true;
-                ProductEdit.SaveMessage = "Saved to the local database and WooCommerce.";
+                ProductEdit.SaveMessage = UiStrings.SavedLocalAndRemote;
                 ErrorMessage = null;
                 StatusMessage = ProductEdit.SaveMessage;
             }
@@ -499,7 +499,7 @@ public partial class MainViewModel : ObservableObject
             {
                 ProductEdit.IsSaveSuccessful = false;
                 ProductEdit.SaveMessage =
-                    "Saved locally. WooCommerce was not updated. Use Unsynced on the product row to retry.";
+                    UiStrings.SavedLocalRemoteFailed;
                 ErrorMessage = result.RemoteError;
                 StatusMessage = result.RemoteError ?? ProductEdit.SaveMessage;
             }
@@ -508,7 +508,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.LogError(ex, "Failed to save product {WooCommerceId}.", original.Id);
             ProductEdit.IsSaveSuccessful = false;
-            ProductEdit.SaveMessage = "Unable to save the product.";
+            ProductEdit.SaveMessage = UiStrings.UnableToSaveProduct;
             ErrorMessage = ProductEdit.SaveMessage;
             StatusMessage = ProductEdit.SaveMessage;
         }
@@ -532,12 +532,12 @@ public partial class MainViewModel : ObservableObject
         if (!TryCreateSettings(out var settings, out var error))
         {
             ErrorMessage = error;
-            StatusMessage = error ?? "Configure the store connection before retrying.";
+            StatusMessage = error ?? UiStrings.ConfigureBeforeRetry;
             return;
         }
 
         IsBusy = true;
-        StatusMessage = "Retrying website update...";
+        StatusMessage = UiStrings.RetryingWebsiteUpdate;
         NotifyPagingCommands();
 
         try
@@ -555,14 +555,14 @@ public partial class MainViewModel : ObservableObject
             if (result.RemoteSaved)
             {
                 ErrorMessage = null;
-                StatusMessage = "Website update succeeded. The product is synced.";
+                StatusMessage = UiStrings.WebsiteUpdateSucceeded;
                 ProductEdit.IsSaveSuccessful = true;
                 ProductEdit.SaveMessage = StatusMessage;
             }
             else
             {
                 ErrorMessage = result.RemoteError;
-                StatusMessage = result.RemoteError ?? "The website could not be updated. The local product is still unsynced.";
+                StatusMessage = result.RemoteError ?? UiStrings.WebsiteUpdateFailedStillUnsynced;
                 ProductEdit.IsSaveSuccessful = false;
                 ProductEdit.SaveMessage = StatusMessage;
             }
@@ -570,7 +570,7 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             _logger.LogError(ex, "Retry sync failed for WooCommerceId {WooCommerceId}.", product.Id);
-            ErrorMessage = "Unable to update the product on WooCommerce.";
+            ErrorMessage = UiStrings.UnableToUpdateOnWooCommerce;
             StatusMessage = ErrorMessage;
         }
         finally
@@ -591,7 +591,7 @@ public partial class MainViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(ConsumerKey) || string.IsNullOrWhiteSpace(ConsumerSecret))
         {
-            error = "Consumer Key and Consumer Secret are required.";
+            error = UiStrings.CredentialsRequired;
             return false;
         }
 
@@ -614,12 +614,12 @@ public partial class MainViewModel : ObservableObject
             ConsumerKey = settings.ConsumerKey;
             ConsumerSecret = settings.ConsumerSecret;
             IsSettingsExpanded = !settings.HasCredentials;
-            StatusMessage = "Loading local products...";
+            StatusMessage = UiStrings.LoadingLocalProducts;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to load WooCommerce settings.");
-            ErrorMessage = "Unable to load saved settings.";
+            ErrorMessage = UiStrings.UnableToLoadSettings;
             StatusMessage = ErrorMessage;
         }
     }
