@@ -1,0 +1,113 @@
+<UserControl x:Class="WooCommerceProductManager.Views.ProductListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:helpers="clr-namespace:WooCommerceProductManager.Helpers"
+             xmlns:vm="clr-namespace:WooCommerceProductManager.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ProductListViewModel}"
+             d:DesignHeight="480"
+             d:DesignWidth="800">
+    <Border Background="White" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="0">
+        <DockPanel>
+            <Grid DockPanel.Dock="Bottom" Margin="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                        Content="Previous"
+                        Command="{Binding DataContext.PreviousPageCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding PageSummary}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource MutedTextBrush}" />
+                <Button Grid.Column="2"
+                        Content="Refresh"
+                        Command="{Binding DataContext.LoadProductsCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                <Button Grid.Column="3"
+                        Content="Next"
+                        Command="{Binding DataContext.NextPageCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            </Grid>
+
+            <Grid>
+                <DataGrid ItemsSource="{Binding Items}"
+                          SelectedItem="{Binding SelectedProduct, Mode=TwoWay}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          HeadersVisibility="Column"
+                          GridLinesVisibility="Horizontal"
+                          BorderThickness="0"
+                          RowHeight="64"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
+                          EnableRowVirtualization="True">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Image" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Grid Width="48" Height="48">
+                                        <Border Background="#EEF2F6" CornerRadius="4">
+                                            <TextBlock Text="No image"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource MutedTextBrush}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       TextWrapping="Wrap"
+                                                       TextAlignment="Center" />
+                                        </Border>
+                                        <Image Stretch="UniformToFill"
+                                               helpers:ImageLoadBehavior.HideOnFailure="True"
+                                               Visibility="{Binding HasImage, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                               Source="{Binding FirstImageUrl, Converter={StaticResource UrlToImageSourceConverter}}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Product" Binding="{Binding Name}" Width="*" />
+                        <DataGridTextColumn Header="SKU" Binding="{Binding DisplaySku}" Width="120" />
+                        <DataGridTextColumn Header="Price" Binding="{Binding DisplayPrice}" Width="90" />
+                        <DataGridTextColumn Header="Stock" Binding="{Binding DisplayStockQuantity}" Width="110" />
+                        <DataGridTextColumn Header="Status" Binding="{Binding DisplayStockStatus}" Width="120" />
+                        <DataGridTemplateColumn Header="" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="Unsynced"
+                                            Style="{StaticResource UnsyncedButton}"
+                                            ToolTip="Saved on this computer but not on the website. Click to retry."
+                                            Command="{Binding DataContext.RetrySyncCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding IsDirty, Converter={StaticResource VisibleWhenTrueConverter}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Text="No local products yet. Use Sync from Website to download your catalog."
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource MutedTextBrush}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Margin="24"
+                           Visibility="{Binding HasNoProducts, Converter={StaticResource VisibleWhenTrueConverter}}" />
+
+                <Border Background="#CCFFFFFF"
+                        Visibility="{Binding IsLoading, Converter={StaticResource VisibleWhenTrueConverter}}">
+                    <TextBlock Text="Loading products..."
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource MutedTextBrush}" />
+                </Border>
+            </Grid>
+        </DockPanel>
+    </Border>
+</UserControl>

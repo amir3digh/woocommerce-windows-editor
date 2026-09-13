@@ -1,0 +1,83 @@
+## .NET / Visual Studio
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svclog
+*.cache
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+.vs/
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Publish output
+publish/
+[Rr]elease/
+[Dd]ebug/
+!**/Properties/
+
+## Local SQLite (never commit live product databases)
+*.db
+*.db-shm
+*.db-wal
+design-time.db
+
+## Secrets and local configuration — never commit credentials
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.local.json
+secrets.json
+*.pfx
+*.key
+*.pem
+nupkg.config
+
+## OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+
+## JetBrains / Rider
+.idea/
+*.sln.iml
+
+## Cursor / VS Code (keep shared settings if added later)
+.cursor/plans/
+*.code-workspace

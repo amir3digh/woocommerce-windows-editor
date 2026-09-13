@@ -1,0 +1,190 @@
+<Window x:Class="WooCommerceProductManager.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:helpers="clr-namespace:WooCommerceProductManager.Helpers"
+        xmlns:views="clr-namespace:WooCommerceProductManager.Views"
+        xmlns:vm="clr-namespace:WooCommerceProductManager.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        Title="WooCommerce Product Manager"
+        Height="760"
+        Width="1180"
+        MinHeight="560"
+        MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+    <DockPanel>
+        <Border DockPanel.Dock="Top" Background="{StaticResource HeaderBrush}" Padding="20,16">
+            <StackPanel>
+                <TextBlock Text="WooCommerce Product Manager"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="White" />
+                <TextBlock Text="Manage store products from Windows"
+                           Margin="0,4,0,0"
+                           Foreground="#D6E4F0"
+                           FontSize="13" />
+            </StackPanel>
+        </Border>
+
+        <Border DockPanel.Dock="Top" Background="White" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="0,0,0,1" Padding="16,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Sync from Website"
+                            Style="{StaticResource PrimaryButton}"
+                            Command="{Binding SyncFromWebsiteCommand}"
+                            IsEnabled="{Binding IsIdle}" />
+                    <Button Content="Sync to Website"
+                            IsEnabled="False"
+                            ToolTip="Coming next" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SyncStatusText}" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,4,0,0" Foreground="{StaticResource MutedTextBrush}">
+                        <Run Text="Downloaded:" />
+                        <Run Text="{Binding SyncDownloaded, Mode=OneWay}" />
+                        <Run Text="  Updated:" />
+                        <Run Text="{Binding SyncUpdated, Mode=OneWay}" />
+                        <Run Text="  Added:" />
+                        <Run Text="{Binding SyncAdded, Mode=OneWay}" />
+                        <Run Text="  Conflicts:" />
+                        <Run Text="{Binding SyncConflicts, Mode=OneWay}" />
+                        <Run Text="  Errors:" />
+                        <Run Text="{Binding SyncErrors, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Background="White" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="0,1,0,0" Padding="16,10">
+            <Grid>
+                <TextBlock Text="{Binding StatusMessage}"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource MutedTextBrush}" />
+                <TextBlock Text="{Binding ErrorMessage}"
+                           HorizontalAlignment="Right"
+                           Foreground="{StaticResource ErrorBrush}"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource VisibleWhenHasTextConverter}}" />
+            </Grid>
+        </Border>
+
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Expander Grid.Row="0"
+                      Header="Store connection"
+                      IsExpanded="{Binding IsSettingsExpanded}"
+                      Margin="0,0,0,12"
+                      Background="White"
+                      Padding="12">
+                <Grid Margin="0,12,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Store URL" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding StoreUrl, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Consumer Key" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ConsumerKey, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8" />
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Consumer Secret" VerticalAlignment="Center" />
+                    <PasswordBox Grid.Row="2"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,8"
+                                 helpers:PasswordBoxAssistant.BindPassword="True"
+                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding ConsumerSecret, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="3"
+                               Grid.Column="1"
+                               Text="Credentials are stored only on this computer and are never written to Git."
+                               Foreground="{StaticResource MutedTextBrush}"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap" />
+
+                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="Save settings"
+                                HorizontalAlignment="Left"
+                                Command="{Binding SaveSettingsCommand}"
+                                IsEnabled="{Binding IsIdle}" />
+                        <Button Content="Test Connection"
+                                Style="{StaticResource PrimaryButton}"
+                                Command="{Binding TestConnectionCommand}"
+                                IsEnabled="{Binding IsIdle}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="5"
+                               Grid.Column="1"
+                               Text="{Binding ConnectionResultMessage}"
+                               Margin="0,10,0,0"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding ConnectionResultMessage, Converter={StaticResource VisibleWhenHasTextConverter}}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLastConnectionSuccessful}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+            </Expander>
+
+            <Grid Grid.Row="1" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             IsEnabled="{Binding IsIdle}" />
+                    <TextBlock Text="Search products..."
+                               IsHitTestVisible="False"
+                               Foreground="#8B949E"
+                               Margin="10,7,0,0"
+                               Visibility="{Binding SearchText, Converter={StaticResource VisibleWhenHasTextConverter}, ConverterParameter=Invert}" />
+                </Grid>
+                <Button Grid.Column="1"
+                        Content="Search"
+                        Command="{Binding SearchCommand}"
+                        IsEnabled="{Binding IsIdle}" />
+            </Grid>
+
+            <Grid Grid.Row="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="360" />
+                </Grid.ColumnDefinitions>
+
+                <views:ProductListView Grid.Column="0"
+                                       DataContext="{Binding Products}"
+                                       Margin="0,0,12,0" />
+
+                <views:ProductEditView Grid.Column="1"
+                                       DataContext="{Binding ProductEdit}" />
+            </Grid>
+        </Grid>
+    </DockPanel>
+</Window>
