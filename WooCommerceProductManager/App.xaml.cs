@@ -51,6 +51,7 @@ public partial class App : Application
         services.AddDbContextFactory<AppDbContext>(options =>
             options.UseSqlite($"Data Source={AppPaths.DatabaseFile}"));
         services.AddSingleton<IImageFilePicker, ImageFilePicker>();
+        services.AddSingleton<IConfirmDialog, ConfirmDialog>();
         services.AddSingleton<IProductImageCache, ProductImageCache>();
         services.AddSingleton<IProductRepository, ProductRepository>();
         services.AddSingleton<ISettingsService, SettingsService>();

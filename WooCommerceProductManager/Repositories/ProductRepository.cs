@@ -121,4 +121,34 @@ public sealed class ProductRepository : IProductRepository
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return existing.ToProduct();
     }
+
+    public async Task<Product> InsertFromRemoteAsync(Product remote, DateTimeOffset syncedAt, CancellationToken cancellationToken = default)
+    {
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+        var entity = new ProductEntity();
+        entity.CopyFromRemote(remote, syncedAt);
+        db.Products.Add(entity);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return entity.ToProduct();
+    }
+
+    public async Task DeleteAsync(long localId, long wooCommerceId, CancellationToken cancellationToken = default)
+    {
+        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
+
+        var existing = await db.Products
+            .FirstOrDefaultAsync(
+                entity => entity.LocalId == localId || entity.WooCommerceId == wooCommerceId,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (existing is null)
+        {
+            return;
+        }
+
+        db.Products.Remove(existing);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
 }

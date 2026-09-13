@@ -125,6 +125,25 @@ public sealed class ProductImageCache : IProductImageCache, IDisposable
         }
     }
 
+    public void RemoveAll(long wooCommerceId)
+    {
+        if (wooCommerceId <= 0 || !Directory.Exists(AppPaths.ImageCacheDirectory))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(AppPaths.ImageCacheDirectory, $"{wooCommerceId}_*"))
+        {
+            try
+            {
+                File.Delete(file);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
     public string? StoreFromFile(long wooCommerceId, string? imageUrl, string localFilePath)
     {
         if (!File.Exists(localFilePath))

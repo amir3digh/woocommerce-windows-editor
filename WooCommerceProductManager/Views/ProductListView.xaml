@@ -76,13 +76,17 @@
                                             Width="150" />
                         <DataGridTextColumn Header="{x:Static helpers:UiStrings.Stock}" Binding="{Binding DisplayStockQuantity}" Width="110" />
                         <DataGridTextColumn Header="{x:Static helpers:UiStrings.Status}" Binding="{Binding DisplayStockStatus}" Width="120" />
-                        <DataGridTemplateColumn Header="" Width="280">
+                        <DataGridTemplateColumn Header="" Width="340">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                         <Button Content="{x:Static helpers:UiStrings.ViewOnWebsite}"
                                                 Style="{StaticResource LinkButton}"
                                                 Command="{Binding DataContext.OpenProductOnWebsiteCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}" />
+                                        <Button Content="{x:Static helpers:UiStrings.Delete}"
+                                                Style="{StaticResource DangerLinkButton}"
+                                                Command="{Binding DataContext.DeleteProductCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}" />
                                         <Button Content="{x:Static helpers:UiStrings.Unsynced}"
                                                 Style="{StaticResource UnsyncedButton}"

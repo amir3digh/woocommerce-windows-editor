@@ -134,6 +134,16 @@ public sealed class Product : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    public static Product CreateDraft() => new()
+    {
+        Id = 0,
+        LocalId = 0,
+        Name = string.Empty,
+        StockStatus = "instock",
+        ManageStock = false,
+        Images = []
+    };
+
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

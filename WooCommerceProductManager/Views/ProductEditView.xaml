@@ -12,7 +12,7 @@
     <Border Background="White" BorderBrush="{StaticResource BorderBrushColor}" BorderThickness="1" Padding="16">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <TextBlock Text="{x:Static helpers:UiStrings.Product}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                <TextBlock Text="{Binding EditorTitle}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
                 <Grid Width="160" HorizontalAlignment="Right" Margin="0,0,0,16">
                     <Grid.RowDefinitions>
@@ -83,6 +83,11 @@
                                Foreground="{StaticResource MutedTextBrush}" />
                 </Grid>
 
+                <CheckBox Content="{x:Static helpers:UiStrings.ManageStock}"
+                          IsChecked="{Binding ManageStock}"
+                          Margin="0,0,0,10"
+                          IsEnabled="{Binding CanEdit}" />
+
                 <TextBlock Text="{x:Static helpers:UiStrings.StockQuantity}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding StockQuantity, UpdateSourceTrigger=PropertyChanged}"
                          Margin="0,0,0,10"
@@ -125,6 +130,10 @@
                     <Button Content="{x:Static helpers:UiStrings.Save}"
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding SaveCommand}" />
+                    <Button Content="{x:Static helpers:UiStrings.Delete}"
+                            Style="{StaticResource DangerButton}"
+                            Command="{Binding DeleteCommand}"
+                            Visibility="{Binding CanDelete, Converter={StaticResource VisibleWhenTrueConverter}}" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

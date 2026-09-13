@@ -29,6 +29,18 @@ public static class UiStrings
     public const string Refresh = "نوسازی";
     public const string Image = "تصویر";
     public const string Product = "محصول";
+    public const string NewProduct = "محصول جدید";
+    public const string FillNewProduct = "جزئیات محصول جدید را وارد کنید و ذخیره را بزنید.";
+    public const string CreatingProduct = "در حال ساخت محصول...";
+    public const string ProductCreated = "محصول در وب‌سایت ساخته شد.";
+    public const string UnableToCreateProduct = "ساخت محصول در ووکامرس ممکن نشد.";
+    public const string Delete = "حذف";
+    public const string DeleteProductTitle = "حذف محصول";
+    public const string DeletingProduct = "در حال حذف محصول...";
+    public const string ProductDeleted = "محصول از وب‌سایت و از این برنامه حذف شد.";
+    public const string UnableToDeleteProduct = "حذف محصول ممکن نشد. محصول محلی حذف نشد.";
+    public const string ConfigureBeforeDelete = "قبل از حذف، اتصال فروشگاه را پیکربندی کنید.";
+    public const string ManageStock = "مدیریت موجودی";
     public const string Sku = "کد کالا";
     public const string Price = "قیمت";
     public const string Currency = "تومان";
@@ -120,6 +132,12 @@ public static class UiStrings
     public const string ImageUploadForbidden = "بارگذاری تصویر رد شد. نام کاربری وردپرس و رمز برنامه را ذخیره کنید. کاربر باید اجازه بارگذاری پرونده داشته باشد (مدیر یا مدیر فروشگاه).";
     public const string ImageUploadNeedsApplicationPassword = "برای بارگذاری تصویر، نام کاربری وردپرس و رمز برنامه را در بخش اتصال فروشگاه وارد و ذخیره کنید.";
     public const string SyncComplete = "همگام‌سازی تمام شد.";
+
+    public static string ConfirmDeleteProduct(string name)
+    {
+        var title = string.IsNullOrWhiteSpace(name) ? Product : name.Trim();
+        return $"محصول «{title}» برای همیشه از وب‌سایت و از این برنامه حذف شود؟ این کار قابل برگشت نیست.";
+    }
 
     public static string PageOnly(int current) => $"صفحه {current}";
 

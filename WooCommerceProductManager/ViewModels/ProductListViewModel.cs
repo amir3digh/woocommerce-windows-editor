@@ -98,6 +98,19 @@ public partial class ProductListViewModel : ObservableObject
         }
     }
 
+    public void InsertProduct(Product product)
+    {
+        Items.Insert(0, product);
+        if (TotalItems is int total)
+        {
+            TotalItems = total + 1;
+        }
+
+        SelectedProduct = product;
+        OnPropertyChanged(nameof(CanGoNext));
+        OnPropertyChanged(nameof(PageSummary));
+    }
+
     partial void OnIsLoadingChanged(bool value) => OnPropertyChanged(nameof(HasNoProducts));
 
     partial void OnCurrentPageChanged(int value)

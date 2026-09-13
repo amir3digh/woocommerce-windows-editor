@@ -92,6 +92,19 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         return await SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<WooCommerceHttpResponse> PostAsync(string relativePath, string jsonBody, CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, CreateAllowedRequestUri(relativePath));
+        request.Content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+        return await SendAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<WooCommerceHttpResponse> DeleteAsync(string relativePath, CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, CreateAllowedRequestUri(relativePath));
+        return await SendAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task<WordPressMediaUpload> UploadMediaAsync(string filePath, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))

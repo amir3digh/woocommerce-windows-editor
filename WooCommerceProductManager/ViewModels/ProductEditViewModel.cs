@@ -28,8 +28,10 @@ public partial class ProductEditViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasProduct))]
     [NotifyPropertyChangedFor(nameof(CanEdit))]
+    [NotifyPropertyChangedFor(nameof(CanDelete))]
     [NotifyPropertyChangedFor(nameof(IsStockQuantityEnabled))]
     [NotifyPropertyChangedFor(nameof(PlaceholderText))]
+    [NotifyPropertyChangedFor(nameof(EditorTitle))]
     private Product? _product;
 
     [ObservableProperty]
@@ -60,6 +62,7 @@ public partial class ProductEditViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanEdit))]
+    [NotifyPropertyChangedFor(nameof(CanDelete))]
     [NotifyPropertyChangedFor(nameof(IsStockQuantityEnabled))]
     private bool _isSaving;
 
@@ -83,13 +86,19 @@ public partial class ProductEditViewModel : ObservableObject
 
     public bool CanEdit => Product is not null && !IsSaving;
 
+    public bool CanDelete => Product is { Id: > 0 } && !IsSaving;
+
     public bool IsStockQuantityEnabled => CanEdit && ManageStock;
 
     public string PlaceholderText => HasProduct ? UiStrings.NoImage : UiStrings.NoProductSelected;
 
+    public string EditorTitle => Product is { Id: <= 0 } ? UiStrings.NewProduct : UiStrings.Product;
+
     public bool HasPendingImage => !string.IsNullOrWhiteSpace(_pendingImagePath);
 
     public Func<Task>? SaveAction { get; set; }
+
+    public Func<Task>? DeleteAction { get; set; }
 
     public Action? CancelAction { get; set; }
 
@@ -98,6 +107,7 @@ public partial class ProductEditViewModel : ObservableObject
         SaveCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
         ChooseImageCommand.NotifyCanExecuteChanged();
+        DeleteCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsSavingChanged(bool value)
@@ -105,6 +115,7 @@ public partial class ProductEditViewModel : ObservableObject
         SaveCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
         ChooseImageCommand.NotifyCanExecuteChanged();
+        DeleteCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanSaveOrCancel() => CanEdit;
@@ -122,6 +133,17 @@ public partial class ProductEditViewModel : ObservableObject
     private void Cancel()
     {
         CancelAction?.Invoke();
+    }
+
+    private bool CanExecuteDelete() => CanDelete;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteDelete))]
+    private async Task DeleteAsync()
+    {
+        if (DeleteAction is not null)
+        {
+            await DeleteAction().ConfigureAwait(true);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanSaveOrCancel))]

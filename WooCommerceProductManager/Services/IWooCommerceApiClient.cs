@@ -16,5 +16,9 @@ public interface IWooCommerceApiClient
 
     Task<WooCommerceHttpResponse> PutAsync(string relativePath, string jsonBody, CancellationToken cancellationToken = default);
 
+    Task<WooCommerceHttpResponse> PostAsync(string relativePath, string jsonBody, CancellationToken cancellationToken = default);
+
+    Task<WooCommerceHttpResponse> DeleteAsync(string relativePath, CancellationToken cancellationToken = default);
+
     Task<WordPressMediaUpload> UploadMediaAsync(string filePath, CancellationToken cancellationToken = default);
 }

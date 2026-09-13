@@ -19,12 +19,14 @@ public partial class MainViewModel : ObservableObject
     private readonly IProductService _productService;
     private readonly ISyncService _syncService;
     private readonly IProductImageCache _imageCache;
+    private readonly IConfirmDialog _confirmDialog;
     private readonly ILogger<MainViewModel> _logger;
     private CancellationTokenSource? _loadCts;
     private CancellationTokenSource? _searchDebounceCts;
     private CancellationTokenSource? _selectedImageCts;
     private int _loadGeneration;
     private bool _forceImageRefresh;
+    private bool _ignoreProductSelectionLoad;
 
     [ObservableProperty]
     private string _storeUrl = string.Empty;
@@ -56,6 +58,8 @@ public partial class MainViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SearchCommand))]
     [NotifyCanExecuteChangedFor(nameof(SyncFromWebsiteCommand))]
     [NotifyCanExecuteChangedFor(nameof(RetrySyncCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartNewProductCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteProductCommand))]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -98,6 +102,7 @@ public partial class MainViewModel : ObservableObject
         _productService = null!;
         _syncService = null!;
         _imageCache = null!;
+        _confirmDialog = null!;
         _logger = null!;
     }
 
@@ -107,6 +112,7 @@ public partial class MainViewModel : ObservableObject
         IProductService productService,
         ISyncService syncService,
         IProductImageCache imageCache,
+        IConfirmDialog confirmDialog,
         ILogger<MainViewModel> logger,
         ProductListViewModel productListViewModel,
         ProductEditViewModel productEditViewModel)
@@ -116,10 +122,12 @@ public partial class MainViewModel : ObservableObject
         _productService = productService;
         _syncService = syncService;
         _imageCache = imageCache;
+        _confirmDialog = confirmDialog;
         _logger = logger;
         Products = productListViewModel;
         ProductEdit = productEditViewModel;
         ProductEdit.SaveAction = ExecuteSaveProductAsync;
+        ProductEdit.DeleteAction = () => ExecuteDeleteProductAsync(ProductEdit.Product);
         ProductEdit.CancelAction = () => ProductEdit.Load(Products.SelectedProduct);
         Products.PropertyChanged += ProductsOnPropertyChanged;
 
@@ -165,9 +173,15 @@ public partial class MainViewModel : ObservableObject
 
     private bool CanRetrySync() => IsIdle;
 
+    private bool CanStartNewProduct() => IsIdle;
+
+    private bool CanDeleteProduct() => IsIdle;
+
     private void ProductsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName != nameof(ProductListViewModel.SelectedProduct) || ProductEdit.IsSaving)
+        if (e.PropertyName != nameof(ProductListViewModel.SelectedProduct)
+            || ProductEdit.IsSaving
+            || _ignoreProductSelectionLoad)
         {
             return;
         }
@@ -571,6 +585,122 @@ public partial class MainViewModel : ObservableObject
         SearchCommand.NotifyCanExecuteChanged();
         SyncFromWebsiteCommand.NotifyCanExecuteChanged();
         RetrySyncCommand.NotifyCanExecuteChanged();
+        StartNewProductCommand.NotifyCanExecuteChanged();
+        DeleteProductCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanStartNewProduct))]
+    private void StartNewProduct()
+    {
+        ErrorMessage = null;
+        _ignoreProductSelectionLoad = true;
+        try
+        {
+            Products.SelectedProduct = null;
+        }
+        finally
+        {
+            _ignoreProductSelectionLoad = false;
+        }
+
+        ProductEdit.Load(Product.CreateDraft());
+        StatusMessage = UiStrings.FillNewProduct;
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteProduct))]
+    private Task DeleteProductAsync(Product? product) => ExecuteDeleteProductAsync(product);
+
+    private async Task ExecuteDeleteProductAsync(Product? product)
+    {
+        product ??= ProductEdit.Product;
+        if (product is null || product.Id <= 0)
+        {
+            return;
+        }
+
+        if (_confirmDialog is null
+            || !_confirmDialog.Confirm(UiStrings.ConfirmDeleteProduct(product.Name), UiStrings.DeleteProductTitle))
+        {
+            return;
+        }
+
+        if (!TryCreateSettings(out var settings, out var error))
+        {
+            ErrorMessage = error;
+            ProductEdit.ValidationMessage = error;
+            StatusMessage = error ?? UiStrings.ConfigureBeforeDelete;
+            return;
+        }
+
+        ProductEdit.SaveMessage = null;
+        ProductEdit.IsSaveSuccessful = false;
+        ProductEdit.IsSaving = true;
+        IsBusy = true;
+        StatusMessage = UiStrings.DeletingProduct;
+        NotifyPagingCommands();
+
+        var page = Products.CurrentPage;
+        try
+        {
+            var result = await _productService
+                .DeleteProductAsync(settings, product)
+                .ConfigureAwait(true);
+
+            if (!result.Succeeded)
+            {
+                ProductEdit.IsSaveSuccessful = false;
+                ProductEdit.SaveMessage = result.Error ?? UiStrings.UnableToDeleteProduct;
+                ErrorMessage = ProductEdit.SaveMessage;
+                StatusMessage = ProductEdit.SaveMessage;
+                return;
+            }
+
+            _imageCache?.RemoveAll(product.Id);
+
+            _ignoreProductSelectionLoad = true;
+            try
+            {
+                if (Products.SelectedProduct?.LocalId == product.LocalId
+                    || ProductEdit.Product?.LocalId == product.LocalId)
+                {
+                    Products.SelectedProduct = null;
+                    ProductEdit.Load(null);
+                }
+            }
+            finally
+            {
+                _ignoreProductSelectionLoad = false;
+            }
+
+            ErrorMessage = null;
+            StatusMessage = UiStrings.ProductDeleted;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete WooCommerce product {WooCommerceId}.", product.Id);
+            ProductEdit.IsSaveSuccessful = false;
+            ProductEdit.SaveMessage = UiStrings.UnableToDeleteProduct;
+            ErrorMessage = ProductEdit.SaveMessage;
+            StatusMessage = ProductEdit.SaveMessage;
+            return;
+        }
+        finally
+        {
+            ProductEdit.IsSaving = false;
+            IsBusy = false;
+            NotifyPagingCommands();
+        }
+
+        await FetchProductsAsync(page).ConfigureAwait(true);
+        if (Products.Items.Count == 0 && Products.CurrentPage > 1)
+        {
+            await FetchProductsAsync(Products.CurrentPage - 1).ConfigureAwait(true);
+        }
+
+        if (string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            StatusMessage = UiStrings.ProductDeleted;
+        }
     }
 
     private async Task ExecuteSaveProductAsync()
@@ -584,16 +714,6 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var jsonBody = ProductUpdatePayload.TryBuildChangedJson(ProductEdit.Product, values);
-        var imagePath = values.LocalImagePath;
-        if (jsonBody is null && string.IsNullOrWhiteSpace(imagePath))
-        {
-            ProductEdit.SaveMessage = UiStrings.NoChangesToSave;
-            ProductEdit.IsSaveSuccessful = true;
-            StatusMessage = ProductEdit.SaveMessage;
-            return;
-        }
-
         if (!TryCreateSettings(out var settings, out var error))
         {
             ErrorMessage = error;
@@ -603,8 +723,23 @@ public partial class MainViewModel : ObservableObject
         }
 
         var original = ProductEdit.Product;
-        var edited = ProductUpdatePayload.ToLocalProduct(original, values);
+        if (original.Id <= 0)
+        {
+            await CreateNewProductAsync(settings, values).ConfigureAwait(true);
+            return;
+        }
 
+        var jsonBody = ProductUpdatePayload.TryBuildChangedJson(original, values);
+        var imagePath = values.LocalImagePath;
+        if (jsonBody is null && string.IsNullOrWhiteSpace(imagePath))
+        {
+            ProductEdit.SaveMessage = UiStrings.NoChangesToSave;
+            ProductEdit.IsSaveSuccessful = true;
+            StatusMessage = ProductEdit.SaveMessage;
+            return;
+        }
+
+        var edited = ProductUpdatePayload.ToLocalProduct(original, values);
         ProductEdit.IsSaving = true;
         IsBusy = true;
         StatusMessage = UiStrings.Saving;
@@ -630,8 +765,7 @@ public partial class MainViewModel : ObservableObject
             else
             {
                 ProductEdit.IsSaveSuccessful = false;
-                ProductEdit.SaveMessage =
-                    UiStrings.SavedLocalRemoteFailed;
+                ProductEdit.SaveMessage = UiStrings.SavedLocalRemoteFailed;
                 ErrorMessage = result.RemoteError;
                 StatusMessage = result.RemoteError ?? ProductEdit.SaveMessage;
             }
@@ -641,6 +775,63 @@ public partial class MainViewModel : ObservableObject
             _logger.LogError(ex, "Failed to save product {WooCommerceId}.", original.Id);
             ProductEdit.IsSaveSuccessful = false;
             ProductEdit.SaveMessage = UiStrings.UnableToSaveProduct;
+            ErrorMessage = ProductEdit.SaveMessage;
+            StatusMessage = ProductEdit.SaveMessage;
+        }
+        finally
+        {
+            ProductEdit.IsSaving = false;
+            IsBusy = false;
+            NotifyPagingCommands();
+        }
+    }
+
+    private async Task CreateNewProductAsync(WooCommerceSettings settings, ProductEditValues values)
+    {
+        var jsonBody = ProductUpdatePayload.BuildCreateJson(values);
+        var imagePath = values.LocalImagePath;
+        ProductEdit.IsSaving = true;
+        IsBusy = true;
+        StatusMessage = UiStrings.CreatingProduct;
+        NotifyPagingCommands();
+
+        try
+        {
+            var result = await _productService
+                .CreateProductAsync(settings, jsonBody, imagePath)
+                .ConfigureAwait(true);
+
+            if (!result.RemoteSaved)
+            {
+                ProductEdit.IsSaveSuccessful = false;
+                ProductEdit.SaveMessage = result.RemoteError ?? UiStrings.UnableToCreateProduct;
+                ErrorMessage = ProductEdit.SaveMessage;
+                StatusMessage = ProductEdit.SaveMessage;
+                return;
+            }
+
+            _ignoreProductSelectionLoad = true;
+            try
+            {
+                Products.InsertProduct(result.Product);
+            }
+            finally
+            {
+                _ignoreProductSelectionLoad = false;
+            }
+
+            ApplyCachedImage(result.Product, imagePath);
+            ProductEdit.Load(result.Product);
+            ProductEdit.IsSaveSuccessful = true;
+            ProductEdit.SaveMessage = UiStrings.ProductCreated;
+            ErrorMessage = null;
+            StatusMessage = ProductEdit.SaveMessage;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to create a WooCommerce product.");
+            ProductEdit.IsSaveSuccessful = false;
+            ProductEdit.SaveMessage = UiStrings.UnableToCreateProduct;
             ErrorMessage = ProductEdit.SaveMessage;
             StatusMessage = ProductEdit.SaveMessage;
         }

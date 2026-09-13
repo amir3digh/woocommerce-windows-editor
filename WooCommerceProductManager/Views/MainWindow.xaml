@@ -43,6 +43,9 @@
                             Style="{StaticResource PrimaryButton}"
                             Command="{Binding SyncFromWebsiteCommand}"
                             IsEnabled="{Binding IsIdle}" />
+                    <Button Content="{x:Static helpers:UiStrings.NewProduct}"
+                            Command="{Binding StartNewProductCommand}"
+                            IsEnabled="{Binding IsIdle}" />
                     <Button Content="{x:Static helpers:UiStrings.SyncToWebsite}"
                             IsEnabled="False"
                             ToolTip="{x:Static helpers:UiStrings.ComingNext}" />

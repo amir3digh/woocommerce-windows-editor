@@ -19,6 +19,10 @@ public interface IProductRepository
     Task<Product?> SaveLocalEditsAsync(Product product, bool isDirty, CancellationToken cancellationToken = default);
 
     Task<Product?> ReplaceWithRemoteAsync(Product remote, DateTimeOffset syncedAt, CancellationToken cancellationToken = default);
+
+    Task<Product> InsertFromRemoteAsync(Product remote, DateTimeOffset syncedAt, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(long localId, long wooCommerceId, CancellationToken cancellationToken = default);
 }
 
 public enum RemoteUpsertResult

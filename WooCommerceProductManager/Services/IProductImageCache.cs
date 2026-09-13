@@ -11,4 +11,6 @@ public interface IProductImageCache
         CancellationToken cancellationToken = default);
 
     string? StoreFromFile(long wooCommerceId, string? imageUrl, string localFilePath);
+
+    void RemoveAll(long wooCommerceId);
 }

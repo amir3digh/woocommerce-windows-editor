@@ -28,8 +28,19 @@ public interface IProductService
         string? localImagePath = null,
         CancellationToken cancellationToken = default);
 
+    Task<SaveProductResult> CreateProductAsync(
+        WooCommerceSettings settings,
+        string jsonBody,
+        string? localImagePath = null,
+        CancellationToken cancellationToken = default);
+
     Task<SaveProductResult> RetryWebsiteSyncAsync(
         WooCommerceSettings settings,
         Product localProduct,
+        CancellationToken cancellationToken = default);
+
+    Task<DeleteProductResult> DeleteProductAsync(
+        WooCommerceSettings settings,
+        Product product,
         CancellationToken cancellationToken = default);
 }

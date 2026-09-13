@@ -143,6 +143,83 @@ public sealed class ProductService : IProductService
             .ConfigureAwait(false);
     }
 
+    public async Task<SaveProductResult> CreateProductAsync(
+        WooCommerceSettings settings,
+        string jsonBody,
+        string? localImagePath = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(jsonBody);
+
+        try
+        {
+            _apiClient.ApplySettings(settings);
+
+            if (!string.IsNullOrWhiteSpace(localImagePath))
+            {
+                var media = await _apiClient.UploadMediaAsync(localImagePath, cancellationToken).ConfigureAwait(false);
+                jsonBody = ProductUpdatePayload.WithFeaturedImage(jsonBody, currentImages: null, media.Id);
+            }
+
+            var response = await _apiClient
+                .PostAsync("products", jsonBody, cancellationToken)
+                .ConfigureAwait(false);
+
+            Product? remote;
+            try
+            {
+                remote = JsonSerializer.Deserialize<Product>(response.Body, JsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "WooCommerce returned invalid product JSON after POST /products.");
+                throw new WooCommerceApiException(
+                    UiStrings.SavedButUnreadableResponse,
+                    diagnosticMessage: "Invalid product JSON after create.",
+                    innerException: ex);
+            }
+
+            if (remote is null || remote.Id <= 0)
+            {
+                throw new WooCommerceApiException(UiStrings.UnableToCreateProduct);
+            }
+
+            remote.Images ??= [];
+            var saved = await _productRepository
+                .InsertFromRemoteAsync(remote, DateTimeOffset.Now, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogInformation("Created WooCommerce product {WooCommerceId} and stored it locally.", saved.Id);
+
+            return new SaveProductResult
+            {
+                Product = saved,
+                RemoteSaved = true
+            };
+        }
+        catch (WooCommerceApiException ex)
+        {
+            _logger.LogWarning(ex, "Creating a WooCommerce product failed.");
+            return new SaveProductResult
+            {
+                Product = new Product(),
+                RemoteSaved = false,
+                RemoteError = ex.UserMessage
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Creating a WooCommerce product failed unexpectedly.");
+            return new SaveProductResult
+            {
+                Product = new Product(),
+                RemoteSaved = false,
+                RemoteError = UiStrings.UnableToCreateProduct
+            };
+        }
+    }
+
     public async Task<SaveProductResult> RetryWebsiteSyncAsync(
         WooCommerceSettings settings,
         Product localProduct,
@@ -246,6 +323,66 @@ public sealed class ProductService : IProductService
                 Product = local,
                 RemoteSaved = false,
                 RemoteError = UiStrings.UnableToUpdateKeptLocal
+            };
+        }
+    }
+
+    public async Task<DeleteProductResult> DeleteProductAsync(
+        WooCommerceSettings settings,
+        Product product,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(product);
+
+        if (product.Id <= 0)
+        {
+            return new DeleteProductResult
+            {
+                Succeeded = false,
+                Error = UiStrings.UnableToDeleteProduct
+            };
+        }
+
+        try
+        {
+            _apiClient.ApplySettings(settings);
+            try
+            {
+                await _apiClient
+                    .DeleteAsync($"products/{product.Id}?force=true", cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (WooCommerceApiException ex) when (ex.StatusCode == 404)
+            {
+                _logger.LogInformation(
+                    "WooCommerce product {WooCommerceId} was already missing. Removing the local row.",
+                    product.Id);
+            }
+
+            await _productRepository
+                .DeleteAsync(product.LocalId, product.Id, cancellationToken)
+                .ConfigureAwait(false);
+
+            _logger.LogInformation("Deleted WooCommerce product {WooCommerceId}.", product.Id);
+            return new DeleteProductResult { Succeeded = true };
+        }
+        catch (WooCommerceApiException ex)
+        {
+            _logger.LogWarning(ex, "Deleting WooCommerce product {WooCommerceId} failed.", product.Id);
+            return new DeleteProductResult
+            {
+                Succeeded = false,
+                Error = ex.UserMessage
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Deleting WooCommerce product {WooCommerceId} failed unexpectedly.", product.Id);
+            return new DeleteProductResult
+            {
+                Succeeded = false,
+                Error = UiStrings.UnableToDeleteProduct
             };
         }
     }

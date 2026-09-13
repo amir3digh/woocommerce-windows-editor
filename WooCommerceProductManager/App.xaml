@@ -104,6 +104,18 @@
             <Setter Property="BorderThickness" Value="0" />
         </Style>
 
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#B42318" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
+        <Style x:Key="DangerLinkButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+            <Setter Property="Background" Value="#B42318" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+
         <Style x:Key="UnsyncedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#B45309" />
             <Setter Property="Foreground" Value="White" />

@@ -55,6 +55,11 @@ public static class ProductUpdatePayload
             body["stock_status"] = edited.StockStatus;
         }
 
+        if (original.ManageStock != edited.ManageStock)
+        {
+            body["manage_stock"] = edited.ManageStock;
+        }
+
         if (edited.ManageStock && original.StockQuantity != edited.StockQuantity)
         {
             if (edited.StockQuantity is int quantity)
@@ -100,10 +105,34 @@ public static class ProductUpdatePayload
             ["sku"] = local.Sku ?? string.Empty,
             ["regular_price"] = NormalizePrice(local.RegularPrice),
             ["sale_price"] = NormalizePrice(local.SalePrice),
-            ["stock_status"] = local.StockStatus ?? "instock"
+            ["stock_status"] = local.StockStatus ?? "instock",
+            ["manage_stock"] = local.ManageStock
         };
 
         if (local.ManageStock && local.StockQuantity is int quantity)
+        {
+            body["stock_quantity"] = quantity;
+        }
+
+        return body.ToJsonString();
+    }
+
+    public static string BuildCreateJson(ProductEditValues edited)
+    {
+        var sale = string.IsNullOrWhiteSpace(edited.SalePrice) ? string.Empty : edited.SalePrice;
+        var body = new JsonObject
+        {
+            ["name"] = edited.Name,
+            ["type"] = "simple",
+            ["status"] = "publish",
+            ["sku"] = edited.Sku,
+            ["regular_price"] = edited.RegularPrice,
+            ["sale_price"] = sale,
+            ["stock_status"] = edited.StockStatus,
+            ["manage_stock"] = edited.ManageStock
+        };
+
+        if (edited.ManageStock && edited.StockQuantity is int quantity)
         {
             body["stock_quantity"] = quantity;
         }
@@ -123,8 +152,8 @@ public static class ProductUpdatePayload
             RegularPrice = edited.RegularPrice,
             SalePrice = sale,
             Price = string.IsNullOrWhiteSpace(sale) ? edited.RegularPrice : sale,
-            ManageStock = original.ManageStock,
-            StockQuantity = original.ManageStock ? edited.StockQuantity : original.StockQuantity,
+            ManageStock = edited.ManageStock,
+            StockQuantity = edited.ManageStock ? edited.StockQuantity : original.StockQuantity,
             StockStatus = edited.StockStatus,
             DateModified = original.DateModified,
             Permalink = original.Permalink,
