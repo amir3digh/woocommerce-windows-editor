@@ -16,6 +16,9 @@ public static class UiStrings
     public const string StoreUrl = "نشانی فروشگاه";
     public const string ConsumerKey = "کلید مصرف‌کننده";
     public const string ConsumerSecret = "رمز مصرف‌کننده";
+    public const string WordPressUsername = "نام کاربری وردپرس";
+    public const string ApplicationPassword = "رمز برنامه وردپرس";
+    public const string MediaCredentialsHint = "کلید ووکامرس برای تصویر کافی نیست. در وردپرس: کاربران ← شناسنامه ← Application Passwords یک رمز بسازید و اینجا وارد کنید. کاربر باید مدیر یا مدیر فروشگاه باشد.";
     public const string CredentialsHint = "اطلاعات ورود فقط روی همین رایانه ذخیره می‌شود و در گیت نوشته نمی‌شود.";
     public const string SaveSettings = "ذخیره تنظیمات";
     public const string TestConnection = "آزمایش اتصال";
@@ -32,6 +35,8 @@ public static class UiStrings
     public const string Stock = "موجودی";
     public const string Status = "وضعیت";
     public const string Unsynced = "همگام‌نشده";
+    public const string ViewOnWebsite = "مشاهده در وبسایت";
+    public const string UnableToOpenProductPage = "نشانی صفحه محصول ساخته نشد. نشانی فروشگاه را بررسی کنید.";
     public const string UnsyncedTooltip = "روی این رایانه ذخیره شده اما روی وب‌سایت نیست. برای تلاش دوباره کلیک کنید.";
     public const string NoLocalProducts = "هنوز محصولی در پایگاه محلی نیست. برای دریافت کاتالوگ، «همگام‌سازی از وب‌سایت» را بزنید.";
     public const string LoadingProducts = "در حال بارگذاری محصولات...";
@@ -105,6 +110,15 @@ public static class UiStrings
     public const string UnableToUpdateKeptLocal = "به‌روزرسانی ووکامرس ممکن نشد. تغییرات محلی حفظ شدند.";
     public const string DatabaseInitFailed = "پایگاه محصولات محلی راه‌اندازی نشد. برنامه باز می‌شود، اما ممکن است داده محصول در دسترس نباشد.";
     public const string UnexpectedError = "خطای پیش‌بینی‌نشده رخ داد. جزئیات در پرونده گزارش برنامه نوشته شد.";
+    public const string ChooseProductImage = "انتخاب تصویر محصول";
+    public const string ChangeProductImage = "تغییر تصویر";
+    public const string ImageFileFilter = "تصویر|*.jpg;*.jpeg;*.png;*.gif;*.webp";
+    public const string ImageTooLarge = "حجم تصویر باید حداکثر ۸ مگابایت باشد.";
+    public const string ImageTypeInvalid = "فقط پرونده‌های JPG، PNG، GIF یا WebP پذیرفته می‌شود.";
+    public const string ImageFileMissing = "پرونده تصویر پیدا نشد.";
+    public const string ImageUploadFailed = "بارگذاری تصویر روی وب‌سایت ممکن نشد.";
+    public const string ImageUploadForbidden = "بارگذاری تصویر رد شد. نام کاربری وردپرس و رمز برنامه را ذخیره کنید. کاربر باید اجازه بارگذاری پرونده داشته باشد (مدیر یا مدیر فروشگاه).";
+    public const string ImageUploadNeedsApplicationPassword = "برای بارگذاری تصویر، نام کاربری وردپرس و رمز برنامه را در بخش اتصال فروشگاه وارد و ذخیره کنید.";
     public const string SyncComplete = "همگام‌سازی تمام شد.";
 
     public static string PageOnly(int current) => $"صفحه {current}";

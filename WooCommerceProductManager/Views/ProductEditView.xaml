@@ -14,20 +14,31 @@
             <StackPanel>
                 <TextBlock Text="{x:Static helpers:UiStrings.Product}" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
 
-                <Grid Width="160" Height="160" HorizontalAlignment="Right" Margin="0,0,0,16">
-                    <Border Background="#EEF2F6" CornerRadius="6">
-                        <TextBlock Text="{Binding PlaceholderText}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap"
-                                   Margin="8" />
-                    </Border>
-                    <Image Stretch="UniformToFill"
-                           helpers:ImageLoadBehavior.HideOnFailure="True"
-                           Visibility="{Binding ImageUrl, Converter={StaticResource VisibleWhenHasTextConverter}}"
-                           Source="{Binding ImageUrl, Converter={StaticResource UrlToImageSourceConverter}}" />
+                <Grid Width="160" HorizontalAlignment="Right" Margin="0,0,0,16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="160" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0">
+                        <Border Background="#EEF2F6" CornerRadius="6">
+                            <TextBlock Text="{Binding PlaceholderText}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="{StaticResource MutedTextBrush}"
+                                       TextAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="8" />
+                        </Border>
+                        <Image Stretch="UniformToFill"
+                               helpers:ImageLoadBehavior.HideOnFailure="True"
+                               Visibility="{Binding ImageUrl, Converter={StaticResource VisibleWhenHasTextConverter}}"
+                               Source="{Binding ImageUrl, Converter={StaticResource UrlToImageSourceConverter}}" />
+                    </Grid>
+                    <Button Grid.Row="1"
+                            Content="{x:Static helpers:UiStrings.ChangeProductImage}"
+                            Margin="0,8,0,0"
+                            HorizontalAlignment="Stretch"
+                            Command="{Binding ChooseImageCommand}" />
                 </Grid>
 
                 <TextBlock Text="{x:Static helpers:UiStrings.Title}" Margin="0,0,0,4" />

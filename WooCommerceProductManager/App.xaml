@@ -95,6 +95,15 @@
             <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
         </Style>
 
+        <Style x:Key="LinkButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Background" Value="#EEF2F6" />
+            <Setter Property="BorderThickness" Value="0" />
+        </Style>
+
         <Style x:Key="UnsyncedButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
             <Setter Property="Background" Value="#B45309" />
             <Setter Property="Foreground" Value="White" />

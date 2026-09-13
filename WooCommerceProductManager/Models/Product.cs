@@ -1,3 +1,6 @@
+using System.ComponentModel;
+using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using WooCommerceProductManager.Helpers;
 
@@ -7,8 +10,10 @@ namespace WooCommerceProductManager.Models;
 /// Product fields from the official WooCommerce REST API <c>GET /products</c> response.
 /// Prices are strings, matching the API. Stock quantity may be null when stock is not managed.
 /// </summary>
-public sealed class Product
+public sealed class Product : INotifyPropertyChanged
 {
+    private string? _cachedImagePath;
+
     [JsonPropertyName("id")]
     public long Id { get; set; }
 
@@ -43,6 +48,9 @@ public sealed class Product
     [JsonPropertyName("date_modified")]
     public string? DateModified { get; set; }
 
+    [JsonPropertyName("permalink")]
+    public string? Permalink { get; set; }
+
     [JsonIgnore]
     public long LocalId { get; set; }
 
@@ -50,11 +58,48 @@ public sealed class Product
     public bool IsDirty { get; set; }
 
     [JsonIgnore]
+    public string? CachedImagePath
+    {
+        get => _cachedImagePath;
+        set
+        {
+            if (string.Equals(_cachedImagePath, value, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _cachedImagePath = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DisplayImageUrl));
+            OnPropertyChanged(nameof(HasImage));
+        }
+    }
+
+    [JsonIgnore]
     public string? FirstImageUrl =>
         Images?.FirstOrDefault(image => !string.IsNullOrWhiteSpace(image.Src))?.Src;
 
     [JsonIgnore]
-    public bool HasImage => !string.IsNullOrWhiteSpace(FirstImageUrl);
+    public string? DisplayImageUrl
+    {
+        get
+        {
+            if (LocalImagePath.TryGetFilePath(FirstImageUrl, out var localFile))
+            {
+                return localFile;
+            }
+
+            if (!string.IsNullOrWhiteSpace(CachedImagePath) && File.Exists(CachedImagePath))
+            {
+                return CachedImagePath;
+            }
+
+            return null;
+        }
+    }
+
+    [JsonIgnore]
+    public bool HasImage => !string.IsNullOrWhiteSpace(DisplayImageUrl);
 
     [JsonIgnore]
     public string DisplaySku => string.IsNullOrWhiteSpace(Sku) ? "—" : Sku;
@@ -86,4 +131,9 @@ public sealed class Product
         "onbackorder" => UiStrings.OnBackorder,
         _ => string.IsNullOrWhiteSpace(StockStatus) ? "—" : StockStatus
     };
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

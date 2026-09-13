@@ -15,4 +15,6 @@ public static class AppPaths
     public static string LocalSettingsFile => Path.Combine(RootDirectory, "settings.json");
 
     public static string DatabaseFile => Path.Combine(RootDirectory, "products.db");
+
+    public static string ImageCacheDirectory => Path.Combine(RootDirectory, "image-cache");
 }

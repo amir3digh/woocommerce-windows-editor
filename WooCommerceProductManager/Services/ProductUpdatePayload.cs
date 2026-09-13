@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using WooCommerceProductManager.Helpers;
 using WooCommerceProductManager.Models;
 
 namespace WooCommerceProductManager.Services;
@@ -18,6 +19,8 @@ public sealed class ProductEditValues
     public required string StockStatus { get; init; }
 
     public bool ManageStock { get; init; }
+
+    public string? LocalImagePath { get; init; }
 }
 
 public static class ProductUpdatePayload
@@ -67,6 +70,28 @@ public static class ProductUpdatePayload
         return body.Count == 0 ? null : body.ToJsonString();
     }
 
+    public static string WithFeaturedImage(string? jsonBody, IReadOnlyList<ProductImage>? currentImages, long mediaId)
+    {
+        var body = string.IsNullOrWhiteSpace(jsonBody)
+            ? new JsonObject()
+            : JsonNode.Parse(jsonBody) as JsonObject ?? new JsonObject();
+
+        var images = new JsonArray { new JsonObject { ["id"] = mediaId } };
+        if (currentImages is not null)
+        {
+            foreach (var image in currentImages.Skip(1))
+            {
+                if (image.Id > 0)
+                {
+                    images.Add(new JsonObject { ["id"] = image.Id });
+                }
+            }
+        }
+
+        body["images"] = images;
+        return body.ToJsonString();
+    }
+
     public static string BuildFullJson(Product local)
     {
         var body = new JsonObject
@@ -102,7 +127,10 @@ public static class ProductUpdatePayload
             StockQuantity = original.ManageStock ? edited.StockQuantity : original.StockQuantity,
             StockStatus = edited.StockStatus,
             DateModified = original.DateModified,
-            Images = original.Images,
+            Permalink = original.Permalink,
+            Images = string.IsNullOrWhiteSpace(edited.LocalImagePath)
+                ? original.Images
+                : [new ProductImage { Src = LocalImagePath.ToDisplayUrl(edited.LocalImagePath) }],
             IsDirty = true
         };
     }

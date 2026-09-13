@@ -124,7 +124,8 @@ public sealed class ProductService : IProductService
         WooCommerceSettings settings,
         Product original,
         Product edited,
-        string jsonBody,
+        string? jsonBody,
+        string? localImagePath = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -138,7 +139,8 @@ public sealed class ProductService : IProductService
 
         _logger.LogInformation("Saved local edits for WooCommerceId {WooCommerceId}.", local.Id);
 
-        return await PushJsonToWebsiteAsync(settings, local, jsonBody, cancellationToken).ConfigureAwait(false);
+        return await PushJsonToWebsiteAsync(settings, local, jsonBody, localImagePath, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     public async Task<SaveProductResult> RetryWebsiteSyncAsync(
@@ -149,19 +151,44 @@ public sealed class ProductService : IProductService
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(localProduct);
 
+        LocalImagePath.TryGetFilePath(localProduct.FirstImageUrl, out var localImagePath);
         var jsonBody = ProductUpdatePayload.BuildFullJson(localProduct);
-        return await PushJsonToWebsiteAsync(settings, localProduct, jsonBody, cancellationToken).ConfigureAwait(false);
+        return await PushJsonToWebsiteAsync(
+                settings,
+                localProduct,
+                jsonBody,
+                string.IsNullOrWhiteSpace(localImagePath) ? null : localImagePath,
+                cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task<SaveProductResult> PushJsonToWebsiteAsync(
         WooCommerceSettings settings,
         Product local,
-        string jsonBody,
+        string? jsonBody,
+        string? localImagePath,
         CancellationToken cancellationToken)
     {
         try
         {
             _apiClient.ApplySettings(settings);
+
+            if (!string.IsNullOrWhiteSpace(localImagePath))
+            {
+                var media = await _apiClient.UploadMediaAsync(localImagePath, cancellationToken).ConfigureAwait(false);
+                var currentImages = await TryGetRemoteImagesAsync(local.Id, cancellationToken).ConfigureAwait(false);
+                jsonBody = ProductUpdatePayload.WithFeaturedImage(jsonBody, currentImages, media.Id);
+            }
+
+            if (string.IsNullOrWhiteSpace(jsonBody))
+            {
+                return new SaveProductResult
+                {
+                    Product = local,
+                    RemoteSaved = true
+                };
+            }
+
             var response = await _apiClient
                 .PutAsync($"products/{local.Id}", jsonBody, cancellationToken)
                 .ConfigureAwait(false);
@@ -220,6 +247,23 @@ public sealed class ProductService : IProductService
                 RemoteSaved = false,
                 RemoteError = UiStrings.UnableToUpdateKeptLocal
             };
+        }
+    }
+
+    private async Task<List<ProductImage>?> TryGetRemoteImagesAsync(long productId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _apiClient
+                .GetAsync($"products/{productId}", cancellationToken)
+                .ConfigureAwait(false);
+            var remote = JsonSerializer.Deserialize<Product>(response.Body, JsonOptions);
+            return remote?.Images;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not load existing images for WooCommerceId {WooCommerceId}. The featured image will still be updated.", productId);
+            return null;
         }
     }
 }

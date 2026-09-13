@@ -29,6 +29,7 @@ public partial class App : Application
 
         Directory.CreateDirectory(AppPaths.RootDirectory);
         Directory.CreateDirectory(AppPaths.LogsDirectory);
+        Directory.CreateDirectory(AppPaths.ImageCacheDirectory);
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -49,6 +50,8 @@ public partial class App : Application
 
         services.AddDbContextFactory<AppDbContext>(options =>
             options.UseSqlite($"Data Source={AppPaths.DatabaseFile}"));
+        services.AddSingleton<IImageFilePicker, ImageFilePicker>();
+        services.AddSingleton<IProductImageCache, ProductImageCache>();
         services.AddSingleton<IProductRepository, ProductRepository>();
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<WooCommerceApiClient>();

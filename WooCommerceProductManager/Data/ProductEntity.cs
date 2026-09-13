@@ -24,6 +24,8 @@ public sealed class ProductEntity
 
     public string? ImageUrl { get; set; }
 
+    public string? Permalink { get; set; }
+
     public string? DateModified { get; set; }
 
     public DateTimeOffset? LastSyncedAt { get; set; }

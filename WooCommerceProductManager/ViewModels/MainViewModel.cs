@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -17,10 +18,13 @@ public partial class MainViewModel : ObservableObject
     private readonly IWooCommerceApiClient _apiClient;
     private readonly IProductService _productService;
     private readonly ISyncService _syncService;
+    private readonly IProductImageCache _imageCache;
     private readonly ILogger<MainViewModel> _logger;
     private CancellationTokenSource? _loadCts;
     private CancellationTokenSource? _searchDebounceCts;
+    private CancellationTokenSource? _selectedImageCts;
     private int _loadGeneration;
+    private bool _forceImageRefresh;
 
     [ObservableProperty]
     private string _storeUrl = string.Empty;
@@ -30,6 +34,12 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private string _consumerSecret = string.Empty;
+
+    [ObservableProperty]
+    private string _wordPressUsername = string.Empty;
+
+    [ObservableProperty]
+    private string _applicationPassword = string.Empty;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -87,6 +97,7 @@ public partial class MainViewModel : ObservableObject
         _apiClient = null!;
         _productService = null!;
         _syncService = null!;
+        _imageCache = null!;
         _logger = null!;
     }
 
@@ -95,6 +106,7 @@ public partial class MainViewModel : ObservableObject
         IWooCommerceApiClient apiClient,
         IProductService productService,
         ISyncService syncService,
+        IProductImageCache imageCache,
         ILogger<MainViewModel> logger,
         ProductListViewModel productListViewModel,
         ProductEditViewModel productEditViewModel)
@@ -103,6 +115,7 @@ public partial class MainViewModel : ObservableObject
         _apiClient = apiClient;
         _productService = productService;
         _syncService = syncService;
+        _imageCache = imageCache;
         _logger = logger;
         Products = productListViewModel;
         ProductEdit = productEditViewModel;
@@ -160,6 +173,10 @@ public partial class MainViewModel : ObservableObject
         }
 
         ProductEdit.Load(Products.SelectedProduct);
+        if (Products.SelectedProduct is { } selected)
+        {
+            _ = RefreshSelectedProductImageAsync(selected);
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanSaveSettings))]
@@ -333,6 +350,7 @@ public partial class MainViewModel : ObservableObject
                 SyncStatusText = StatusMessage;
             }
 
+            _forceImageRefresh = true;
             await FetchProductsAsync(1).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
@@ -392,10 +410,14 @@ public partial class MainViewModel : ObservableObject
             }
 
             Products.ApplyPage(result, Products.SelectedProduct?.LocalId);
+            AttachCachedImages(Products.Items);
             StatusMessage = result.TotalItems is 0
                 ? UiStrings.NoLocalProducts
                 : FormatLoadedMessage(result);
             _logger.LogInformation("Displayed {Count} local products on page {Page}.", result.Products.Count, result.Page);
+            var forceRefresh = _forceImageRefresh;
+            _forceImageRefresh = false;
+            _ = PrefetchProductImagesAsync(Products.Items.ToList(), forceRefresh, token);
         }
         catch (OperationCanceledException)
         {
@@ -433,6 +455,114 @@ public partial class MainViewModel : ObservableObject
         return UiStrings.LoadedProducts(result.Products.Count, result.Page, null, null);
     }
 
+    private void AttachCachedImages(IEnumerable<Product> products)
+    {
+        if (_imageCache is null)
+        {
+            return;
+        }
+
+        foreach (var product in products)
+        {
+            product.CachedImagePath = _imageCache.GetExistingPath(product.Id, product.FirstImageUrl);
+        }
+    }
+
+    private void ApplyCachedImage(Product product, string? localImagePath = null)
+    {
+        if (_imageCache is null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(localImagePath))
+        {
+            product.CachedImagePath = _imageCache.StoreFromFile(product.Id, product.FirstImageUrl, localImagePath);
+            return;
+        }
+
+        product.CachedImagePath = _imageCache.GetExistingPath(product.Id, product.FirstImageUrl);
+    }
+
+    private async Task PrefetchProductImagesAsync(
+        IReadOnlyList<Product> products,
+        bool forceRefresh,
+        CancellationToken cancellationToken)
+    {
+        if (_imageCache is null || products.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var downloads = products.Select(async product =>
+            {
+                var path = await _imageCache
+                    .GetOrDownloadAsync(product.Id, product.FirstImageUrl, forceRefresh, cancellationToken)
+                    .ConfigureAwait(false);
+                return (product, path);
+            });
+
+            var results = await Task.WhenAll(downloads).ConfigureAwait(true);
+            foreach (var (product, path) in results)
+            {
+                product.CachedImagePath = path;
+            }
+
+            if (Products.SelectedProduct is { } selected && !ProductEdit.HasPendingImage)
+            {
+                ProductEdit.ImageUrl = selected.DisplayImageUrl;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to prefetch product images for the current page.");
+        }
+    }
+
+    private async Task RefreshSelectedProductImageAsync(Product product)
+    {
+        if (_imageCache is null)
+        {
+            return;
+        }
+
+        _selectedImageCts?.Cancel();
+        _selectedImageCts?.Dispose();
+        _selectedImageCts = new CancellationTokenSource();
+        var token = _selectedImageCts.Token;
+
+        try
+        {
+            var path = await _imageCache
+                .GetOrDownloadAsync(product.Id, product.FirstImageUrl, forceRefresh: true, token)
+                .ConfigureAwait(true);
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            product.CachedImagePath = path;
+            if (Products.SelectedProduct?.LocalId == product.LocalId
+                && !ProductEdit.IsSaving
+                && !ProductEdit.HasPendingImage)
+            {
+                ProductEdit.ImageUrl = product.DisplayImageUrl;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to refresh cached image for WooCommerceId {WooCommerceId}.", product.Id);
+        }
+    }
+
     private void NotifyPagingCommands()
     {
         PreviousPageCommand.NotifyCanExecuteChanged();
@@ -455,7 +585,8 @@ public partial class MainViewModel : ObservableObject
         }
 
         var jsonBody = ProductUpdatePayload.TryBuildChangedJson(ProductEdit.Product, values);
-        if (jsonBody is null)
+        var imagePath = values.LocalImagePath;
+        if (jsonBody is null && string.IsNullOrWhiteSpace(imagePath))
         {
             ProductEdit.SaveMessage = UiStrings.NoChangesToSave;
             ProductEdit.IsSaveSuccessful = true;
@@ -482,10 +613,11 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var result = await _productService
-                .SaveProductAsync(settings, original, edited, jsonBody)
+                .SaveProductAsync(settings, original, edited, jsonBody, imagePath)
                 .ConfigureAwait(true);
 
             Products.ReplaceProduct(result.Product);
+            ApplyCachedImage(result.Product, imagePath);
             ProductEdit.Load(result.Product);
 
             if (result.RemoteSaved)
@@ -520,6 +652,38 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void OpenProductOnWebsite(Product? product)
+    {
+        product ??= Products.SelectedProduct;
+        if (product is null)
+        {
+            return;
+        }
+
+        if (!ProductWebsiteUrl.TryCreate(StoreUrl, product, out var url))
+        {
+            ErrorMessage = UiStrings.UnableToOpenProductPage;
+            StatusMessage = ErrorMessage;
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url.AbsoluteUri,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to open product page for WooCommerceId {WooCommerceId}.", product.Id);
+            ErrorMessage = UiStrings.UnableToOpenProductPage;
+            StatusMessage = ErrorMessage;
+        }
+    }
+
     [RelayCommand(CanExecute = nameof(CanRetrySync))]
     private async Task RetrySyncAsync(Product? product)
     {
@@ -547,6 +711,7 @@ public partial class MainViewModel : ObservableObject
                 .ConfigureAwait(true);
 
             Products.ReplaceProduct(result.Product);
+            ApplyCachedImage(result.Product);
             if (ProductEdit.Product?.LocalId == result.Product.LocalId)
             {
                 ProductEdit.Load(result.Product);
@@ -599,7 +764,9 @@ public partial class MainViewModel : ObservableObject
         {
             StoreUrl = normalizedUrl,
             ConsumerKey = ConsumerKey.Trim(),
-            ConsumerSecret = ConsumerSecret
+            ConsumerSecret = ConsumerSecret,
+            WordPressUsername = WordPressUsername.Trim(),
+            ApplicationPassword = ApplicationPassword
         };
         error = null;
         return true;
@@ -613,6 +780,8 @@ public partial class MainViewModel : ObservableObject
             StoreUrl = settings.StoreUrl;
             ConsumerKey = settings.ConsumerKey;
             ConsumerSecret = settings.ConsumerSecret;
+            WordPressUsername = settings.WordPressUsername;
+            ApplicationPassword = settings.ApplicationPassword;
             IsSettingsExpanded = !settings.HasCredentials;
             StatusMessage = UiStrings.LoadingLocalProducts;
         }

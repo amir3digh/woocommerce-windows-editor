@@ -1,3 +1,5 @@
+using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -15,7 +17,7 @@ namespace WooCommerceProductManager.Services;
 /// </summary>
 public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
 {
-    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromMinutes(2);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -29,6 +31,8 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
     private Uri? _baseAddress;
     private string _consumerKey = string.Empty;
     private string _consumerSecret = string.Empty;
+    private string _wordPressUsername = string.Empty;
+    private string _applicationPassword = string.Empty;
     private bool _disposed;
 
     public WooCommerceApiClient(ILogger<WooCommerceApiClient> logger)
@@ -88,6 +92,81 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         return await SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<WordPressMediaUpload> UploadMediaAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            throw new WooCommerceApiException(UiStrings.ImageFileMissing);
+        }
+
+        if (!LocalImagePath.IsAllowedExtension(filePath))
+        {
+            throw new WooCommerceApiException(UiStrings.ImageTypeInvalid);
+        }
+
+        var mimeType = LocalImagePath.GetMimeType(filePath)
+            ?? throw new WooCommerceApiException(UiStrings.ImageTypeInvalid);
+
+        var fileInfo = new FileInfo(filePath);
+        if (fileInfo.Length > LocalImagePath.MaxFileBytes)
+        {
+            throw new WooCommerceApiException(UiStrings.ImageTooLarge);
+        }
+
+        if (fileInfo.Length == 0)
+        {
+            throw new WooCommerceApiException(UiStrings.ImageFileMissing);
+        }
+
+        bool hasMediaCredentials;
+        lock (_configurationSync)
+        {
+            hasMediaCredentials = !string.IsNullOrWhiteSpace(_wordPressUsername)
+                && !string.IsNullOrWhiteSpace(_applicationPassword);
+        }
+
+        if (!hasMediaCredentials)
+        {
+            throw new WooCommerceApiException(UiStrings.ImageUploadNeedsApplicationPassword);
+        }
+
+        var bytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        var safeFileName = "product-image" + extension;
+
+        using var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue(mimeType);
+        content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+        {
+            FileName = safeFileName
+        };
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, CreateMediaUploadUri())
+        {
+            Content = content
+        };
+
+        try
+        {
+            var response = await SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var media = JsonSerializer.Deserialize<WordPressMediaResponse>(response.Body, JsonOptions);
+            if (media is null || media.Id <= 0 || string.IsNullOrWhiteSpace(media.SourceUrl))
+            {
+                throw new WooCommerceApiException(UiStrings.ImageUploadFailed);
+            }
+
+            return new WordPressMediaUpload
+            {
+                Id = media.Id,
+                SourceUrl = media.SourceUrl
+            };
+        }
+        catch (WooCommerceApiException ex) when (ex.StatusCode is 401 or 403)
+        {
+            throw new WooCommerceApiException(UiStrings.ImageUploadForbidden, ex.StatusCode, ex.Message, ex);
+        }
+    }
+
     private void Configure(WooCommerceSettings settings)
     {
         if (!WooCommerceUrlValidator.TryValidateHttpsStoreUrl(settings.StoreUrl, out var normalizedUrl, out var error))
@@ -111,6 +190,8 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
             _baseAddress = baseAddress;
             _consumerKey = settings.ConsumerKey.Trim();
             _consumerSecret = settings.ConsumerSecret;
+            _wordPressUsername = settings.WordPressUsername.Trim();
+            _applicationPassword = NormalizeApplicationPassword(settings.ApplicationPassword);
 
             // HttpClient.BaseAddress cannot be assigned after the first request has been sent.
             // Subsequent Configure calls (pagination, reload, test-then-load) must only update
@@ -199,15 +280,28 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
             throw new WooCommerceApiException(UiStrings.RequestMissingUrl);
         }
 
-        string consumerKey;
-        string consumerSecret;
+        string userName;
+        string password;
         lock (_configurationSync)
         {
-            consumerKey = _consumerKey;
-            consumerSecret = _consumerSecret;
+            var isMediaUpload = request.RequestUri.AbsolutePath.EndsWith(
+                "/wp-json/wp/v2/media",
+                StringComparison.OrdinalIgnoreCase);
+            if (isMediaUpload
+                && !string.IsNullOrWhiteSpace(_wordPressUsername)
+                && !string.IsNullOrWhiteSpace(_applicationPassword))
+            {
+                userName = _wordPressUsername;
+                password = _applicationPassword;
+            }
+            else
+            {
+                userName = _consumerKey;
+                password = _consumerSecret;
+            }
         }
 
-        var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{consumerKey}:{consumerSecret}"));
+        var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{userName}:{password}"));
         request.Headers.Authorization = new AuthenticationHeaderValue("Basic", credentials);
     }
 
@@ -248,6 +342,43 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         }
 
         return requestUri;
+    }
+
+    private Uri CreateMediaUploadUri()
+    {
+        Uri baseAddress;
+        lock (_configurationSync)
+        {
+            if (_baseAddress is null)
+            {
+                throw new WooCommerceApiException(UiStrings.ClientNotConfigured);
+            }
+
+            baseAddress = _baseAddress;
+        }
+
+        if (!Uri.TryCreate(baseAddress, "../../wp/v2/media", out var mediaUri))
+        {
+            throw new WooCommerceApiException(UiStrings.RequestPathInvalid);
+        }
+
+        if (!string.Equals(mediaUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new WooCommerceApiException(UiStrings.StoreUrlMustBeHttps);
+        }
+
+        if (!string.Equals(mediaUri.Host, baseAddress.Host, StringComparison.OrdinalIgnoreCase)
+            || mediaUri.Port != baseAddress.Port)
+        {
+            throw new WooCommerceApiException(UiStrings.RequestsOnlyToConfiguredStore);
+        }
+
+        if (!mediaUri.AbsolutePath.EndsWith("/wp-json/wp/v2/media", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new WooCommerceApiException(UiStrings.RequestPathInvalid);
+        }
+
+        return mediaUri;
     }
 
     private WooCommerceApiException CreateHttpException(HttpStatusCode statusCode, string body)
@@ -320,6 +451,11 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         return SensitiveDataRedactor.Redact(path);
     }
 
+    private static string NormalizeApplicationPassword(string? value)
+        => string.IsNullOrWhiteSpace(value)
+            ? string.Empty
+            : string.Concat(value.Where(character => !char.IsWhiteSpace(character)));
+
     private static int? GetPositiveIntHeader(System.Net.Http.Headers.HttpResponseHeaders headers, string name)
     {
         if (!headers.TryGetValues(name, out var values))
@@ -334,5 +470,14 @@ public sealed class WooCommerceApiClient : IWooCommerceApiClient, IDisposable
         }
 
         return null;
+    }
+
+    private sealed class WordPressMediaResponse
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("id")]
+        public long Id { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("source_url")]
+        public string? SourceUrl { get; set; }
     }
 }

@@ -24,7 +24,8 @@ public interface IProductService
         WooCommerceSettings settings,
         Product original,
         Product edited,
-        string jsonBody,
+        string? jsonBody,
+        string? localImagePath = null,
         CancellationToken cancellationToken = default);
 
     Task<SaveProductResult> RetryWebsiteSyncAsync(

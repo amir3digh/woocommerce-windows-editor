@@ -26,6 +26,7 @@ public sealed class AppDbContext : DbContext
             entity.Property(product => product.Price).HasMaxLength(64);
             entity.Property(product => product.StockStatus).HasMaxLength(64);
             entity.Property(product => product.DateModified).HasMaxLength(64);
+            entity.Property(product => product.Permalink).HasMaxLength(2048);
             entity.Property(product => product.IsDirty).HasDefaultValue(false);
         });
     }

@@ -2,6 +2,8 @@
   "WooCommerce": {
     "StoreUrl": "https://your-store.com/wp-json/wc/v3/",
     "ConsumerKey": "ck_replace_with_your_key",
-    "ConsumerSecret": "cs_replace_with_your_secret"
+    "ConsumerSecret": "cs_replace_with_your_secret",
+    "WordPressUsername": "",
+    "ApplicationPassword": ""
   }
 }

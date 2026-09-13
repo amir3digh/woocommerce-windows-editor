@@ -24,6 +24,7 @@ public static class ProductMapper
             StockQuantity = entity.StockQuantity,
             StockStatus = entity.StockStatus,
             DateModified = entity.DateModified,
+            Permalink = entity.Permalink,
             Images = images,
             IsDirty = entity.IsDirty
         };
@@ -41,6 +42,7 @@ public static class ProductMapper
         entity.StockQuantity = remote.StockQuantity;
         entity.StockStatus = remote.StockStatus;
         entity.ImageUrl = remote.FirstImageUrl;
+        entity.Permalink = remote.Permalink;
         entity.DateModified = remote.DateModified;
         entity.LastSyncedAt = syncedAt;
         entity.IsDirty = false;
@@ -56,14 +58,15 @@ public static class ProductMapper
         entity.StockQuantity = edited.ManageStock ? edited.StockQuantity : entity.StockQuantity;
         entity.StockStatus = edited.StockStatus;
         entity.IsDirty = isDirty;
+        if (!string.IsNullOrWhiteSpace(edited.FirstImageUrl))
+        {
+            entity.ImageUrl = edited.FirstImageUrl;
+        }
+
         if (!isDirty)
         {
             entity.LastSyncedAt = DateTimeOffset.Now;
             entity.DateModified = edited.DateModified;
-            if (!string.IsNullOrWhiteSpace(edited.FirstImageUrl))
-            {
-                entity.ImageUrl = edited.FirstImageUrl;
-            }
         }
     }
 }

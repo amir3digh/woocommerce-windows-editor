@@ -96,10 +96,13 @@
                       Padding="12">
                 <Grid Margin="0,12,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="170" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -133,14 +136,38 @@
                                  helpers:PasswordBoxAssistant.BindPassword="True"
                                  helpers:PasswordBoxAssistant.BoundPassword="{Binding ConsumerSecret, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <TextBlock Grid.Row="3"
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="{x:Static helpers:UiStrings.WordPressUsername}" VerticalAlignment="Center" />
+                    <TextBox Grid.Row="3"
+                             Grid.Column="1"
+                             Text="{Binding WordPressUsername, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,8"
+                             xml:lang="en"
+                             Style="{StaticResource LtrTextBox}" />
+
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="{x:Static helpers:UiStrings.ApplicationPassword}" VerticalAlignment="Center" />
+                    <PasswordBox Grid.Row="4"
+                                 Grid.Column="1"
+                                 Margin="0,0,0,8"
+                                 xml:lang="en"
+                                 Style="{StaticResource LtrPasswordBox}"
+                                 helpers:PasswordBoxAssistant.BindPassword="True"
+                                 helpers:PasswordBoxAssistant.BoundPassword="{Binding ApplicationPassword, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Grid.Row="5"
+                               Grid.Column="1"
+                               Text="{x:Static helpers:UiStrings.MediaCredentialsHint}"
+                               Foreground="{StaticResource MutedTextBrush}"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap" />
+
+                    <TextBlock Grid.Row="6"
                                Grid.Column="1"
                                Text="{x:Static helpers:UiStrings.CredentialsHint}"
                                Foreground="{StaticResource MutedTextBrush}"
                                Margin="0,0,0,8"
                                TextWrapping="Wrap" />
 
-                    <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                    <StackPanel Grid.Row="7" Grid.Column="1" Orientation="Horizontal">
                         <Button Content="{x:Static helpers:UiStrings.SaveSettings}"
                                 HorizontalAlignment="Left"
                                 Command="{Binding SaveSettingsCommand}"
@@ -151,7 +178,7 @@
                                 IsEnabled="{Binding IsIdle}" />
                     </StackPanel>
 
-                    <TextBlock Grid.Row="5"
+                    <TextBlock Grid.Row="8"
                                Grid.Column="1"
                                Text="{Binding ConnectionResultMessage}"
                                Margin="0,10,0,0"

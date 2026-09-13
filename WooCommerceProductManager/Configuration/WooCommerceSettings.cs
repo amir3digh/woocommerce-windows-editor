@@ -17,15 +17,25 @@ public sealed class WooCommerceSettings
 
     public string ConsumerSecret { get; set; } = string.Empty;
 
+    public string WordPressUsername { get; set; } = string.Empty;
+
+    public string ApplicationPassword { get; set; } = string.Empty;
+
     public bool HasCredentials =>
         !string.IsNullOrWhiteSpace(StoreUrl)
         && !string.IsNullOrWhiteSpace(ConsumerKey)
         && !string.IsNullOrWhiteSpace(ConsumerSecret);
 
+    public bool HasMediaCredentials =>
+        !string.IsNullOrWhiteSpace(WordPressUsername)
+        && !string.IsNullOrWhiteSpace(ApplicationPassword);
+
     public WooCommerceSettings Clone() => new()
     {
         StoreUrl = StoreUrl,
         ConsumerKey = ConsumerKey,
-        ConsumerSecret = ConsumerSecret
+        ConsumerSecret = ConsumerSecret,
+        WordPressUsername = WordPressUsername,
+        ApplicationPassword = ApplicationPassword
     };
 }

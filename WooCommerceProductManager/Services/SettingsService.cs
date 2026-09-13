@@ -51,6 +51,16 @@ public sealed class SettingsService : ISettingsService
             {
                 settings.ConsumerSecret = Unprotect(local.ConsumerSecret, local.SecretsProtected);
             }
+
+            if (!string.IsNullOrWhiteSpace(local.WordPressUsername))
+            {
+                settings.WordPressUsername = Unprotect(local.WordPressUsername, local.SecretsProtected);
+            }
+
+            if (!string.IsNullOrWhiteSpace(local.ApplicationPassword))
+            {
+                settings.ApplicationPassword = Unprotect(local.ApplicationPassword, local.SecretsProtected);
+            }
         }
 
         _logger.LogInformation(
@@ -72,6 +82,8 @@ public sealed class SettingsService : ISettingsService
             StoreUrl = settings.StoreUrl.Trim(),
             ConsumerKey = Protect(settings.ConsumerKey),
             ConsumerSecret = Protect(settings.ConsumerSecret),
+            WordPressUsername = Protect(settings.WordPressUsername),
+            ApplicationPassword = Protect(settings.ApplicationPassword),
             SecretsProtected = true
         };
 
@@ -141,6 +153,10 @@ public sealed class SettingsService : ISettingsService
         public string ConsumerKey { get; set; } = string.Empty;
 
         public string ConsumerSecret { get; set; } = string.Empty;
+
+        public string WordPressUsername { get; set; } = string.Empty;
+
+        public string ApplicationPassword { get; set; } = string.Empty;
 
         public bool SecretsProtected { get; set; }
     }

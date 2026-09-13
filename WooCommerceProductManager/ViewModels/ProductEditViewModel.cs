@@ -1,3 +1,4 @@
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WooCommerceProductManager.Helpers;
@@ -10,6 +11,20 @@ public sealed record StockStatusChoice(string Value, string Display);
 
 public partial class ProductEditViewModel : ObservableObject
 {
+    private readonly IImageFilePicker? _imageFilePicker;
+    private readonly IProductImageCache? _imageCache;
+    private string? _pendingImagePath;
+
+    public ProductEditViewModel()
+    {
+    }
+
+    public ProductEditViewModel(IImageFilePicker imageFilePicker, IProductImageCache imageCache)
+    {
+        _imageFilePicker = imageFilePicker;
+        _imageCache = imageCache;
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasProduct))]
     [NotifyPropertyChangedFor(nameof(CanEdit))]
@@ -40,6 +55,7 @@ public partial class ProductEditViewModel : ObservableObject
     private bool _manageStock;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PlaceholderText))]
     private string? _imageUrl;
 
     [ObservableProperty]
@@ -71,6 +87,8 @@ public partial class ProductEditViewModel : ObservableObject
 
     public string PlaceholderText => HasProduct ? UiStrings.NoImage : UiStrings.NoProductSelected;
 
+    public bool HasPendingImage => !string.IsNullOrWhiteSpace(_pendingImagePath);
+
     public Func<Task>? SaveAction { get; set; }
 
     public Action? CancelAction { get; set; }
@@ -79,12 +97,14 @@ public partial class ProductEditViewModel : ObservableObject
     {
         SaveCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
+        ChooseImageCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsSavingChanged(bool value)
     {
         SaveCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
+        ChooseImageCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanSaveOrCancel() => CanEdit;
@@ -104,6 +124,47 @@ public partial class ProductEditViewModel : ObservableObject
         CancelAction?.Invoke();
     }
 
+    [RelayCommand(CanExecute = nameof(CanSaveOrCancel))]
+    private void ChooseImage()
+    {
+        if (_imageFilePicker is null)
+        {
+            return;
+        }
+
+        var path = _imageFilePicker.PickImage();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        if (!LocalImagePath.IsAllowedExtension(path))
+        {
+            ValidationMessage = UiStrings.ImageTypeInvalid;
+            return;
+        }
+
+        var length = new FileInfo(path).Length;
+        if (length is 0 or > LocalImagePath.MaxFileBytes)
+        {
+            ValidationMessage = UiStrings.ImageTooLarge;
+            return;
+        }
+
+        ValidationMessage = null;
+        SaveMessage = null;
+        _pendingImagePath = path;
+        var cached = Product is not null
+            ? _imageCache?.StoreFromFile(Product.Id, Product.FirstImageUrl, path)
+            : null;
+        if (Product is not null && !string.IsNullOrWhiteSpace(cached))
+        {
+            Product.CachedImagePath = cached;
+        }
+
+        ImageUrl = cached ?? LocalImagePath.ToDisplayUrl(path);
+    }
+
     public void Load(Product? product)
     {
         Product = product;
@@ -121,6 +182,7 @@ public partial class ProductEditViewModel : ObservableObject
             StockStatus = "instock";
             ManageStock = false;
             ImageUrl = null;
+            _pendingImagePath = null;
             return;
         }
 
@@ -131,7 +193,10 @@ public partial class ProductEditViewModel : ObservableObject
         StockQuantity = product.StockQuantity?.ToString() ?? string.Empty;
         StockStatus = string.IsNullOrWhiteSpace(product.StockStatus) ? "instock" : product.StockStatus;
         ManageStock = product.ManageStock;
-        ImageUrl = product.FirstImageUrl;
+        ImageUrl = product.DisplayImageUrl;
+        _pendingImagePath = LocalImagePath.TryGetFilePath(product.FirstImageUrl, out var pendingPath)
+            ? pendingPath
+            : null;
     }
 
     public bool TryGetValidatedValues(out ProductEditValues? values)
@@ -196,7 +261,8 @@ public partial class ProductEditViewModel : ObservableObject
             SalePrice = salePrice,
             StockQuantity = stockQuantity,
             StockStatus = StockStatus,
-            ManageStock = ManageStock
+            ManageStock = ManageStock,
+            LocalImagePath = _pendingImagePath
         };
         return true;
     }
